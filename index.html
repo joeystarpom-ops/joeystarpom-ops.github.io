@@ -113,7 +113,7 @@
           <th>ดอกเบี้ยสะสม</th>
           <th>ดอกเบี้ยเดือนหน้า</th>
           <th>ครบกำหนดถัดไป</th>
-          <th>เพิ่มการคืนเงินต้น</th>
+          <th>คืนเงินต้น</th>
           <th>ลบ</th>
         </tr>
       </thead>
@@ -176,16 +176,25 @@
     }
 
     function addRepayment(index) {
-      const amount = prompt('กรุณากรอกจำนวนเงินที่คืน (บาท):');
-      const date = new Date().toISOString();
-      if (!isNaN(amount) && parseFloat(amount) > 0) {
-        if (!loans[index].repayments) loans[index].repayments = [];
-        loans[index].repayments.push({ amount: parseFloat(amount), date });
-        localStorage.setItem('loans', JSON.stringify(loans));
-        calcSummary();
-      } else {
+      const amount = prompt('กรอกจำนวนเงินต้นที่คืน (บาท):');
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
         alert('กรุณากรอกจำนวนที่ถูกต้อง');
+        return;
       }
+
+      const repayDate = new Date();
+      const loanStartDate = new Date(loans[index].startDate);
+      const daysUsed = Math.floor((repayDate - loanStartDate) / (1000 * 60 * 60 * 24));
+      const netPrincipal = loans[index].principal - getTotalPaid(loans[index]);
+      const interestPerDay = (netPrincipal * loans[index].rate / 100) / 30;
+      const interestDue = parseFloat((interestPerDay * daysUsed).toFixed(2));
+
+      alert(`ยอดดอกเบี้ยสะสมถึงวันนี้ (ก่อนคืน): ${interestDue.toLocaleString()} บาท`);
+
+      if (!loans[index].repayments) loans[index].repayments = [];
+      loans[index].repayments.push({ amount: parseFloat(amount), date: repayDate.toISOString() });
+      localStorage.setItem('loans', JSON.stringify(loans));
+      calcSummary();
     }
 
     form.addEventListener('submit', (e) => {
