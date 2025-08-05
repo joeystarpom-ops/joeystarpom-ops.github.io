@@ -102,6 +102,7 @@
       <input type="date" id="startDate" required />
       <button type="submit">➕ เพิ่มลูกหนี้</button>
       <button type="button" onclick="downloadExcel()">📥 ดาวน์โหลด Excel</button>
+      <input type="file" id="uploadFile" accept=".json" onchange="uploadData(event)" style="display:inline-block;margin-top:1rem" />
     </form>
 
     <table id="summaryTable">
@@ -232,6 +233,31 @@
       const ws = XLSX.utils.aoa_to_sheet(wsData);
       XLSX.utils.book_append_sheet(wb, ws, 'Loan Summary');
       XLSX.writeFile(wb, 'loan_summary.xlsx');
+    }
+
+    function uploadData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            const timestamp = new Date().toLocaleString();
+            if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการแทนที่ข้อมูลปัจจุบันด้วยข้อมูลใหม่จากไฟล์?`)) {
+              localStorage.setItem('loans', JSON.stringify(imported));
+              loans = imported;
+              alert(`✅ อัปโหลดข้อมูลสำเร็จเมื่อ ${timestamp}`);
+              calcSummary();
+            }
+          } else {
+            alert('❌ ไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์ JSON ที่ได้จากระบบนี้เท่านั้น');
+          }
+        } catch (err) {
+          alert('❌ ไม่สามารถอ่านไฟล์ได้: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
     }
 
     form.addEventListener('submit', (e) => {
