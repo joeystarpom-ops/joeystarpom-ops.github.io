@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Loan Tracker App</title>
+  <title>บัญชีเงินกู้ ยู่ยี่</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -35,7 +35,7 @@
       font-weight: 600;
       color: #b85d8c;
     }
-    input, select, textarea {
+    input {
       width: 100%;
       padding: 0.6rem;
       border: 1px solid #eec8d9;
@@ -84,7 +84,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>🧸 บัญชีเงินกู้น่ารักๆ 💗</h1>
+    <h1>🧸 บัญชีเงินกู้ ยู่ยี่ 💗</h1>
 
     <form id="loanForm">
       <label>ชื่อ</label>
@@ -106,13 +106,15 @@
       <thead>
         <tr>
           <th>ชื่อ</th>
-          <th>เงินต้น</th>
+          <th>เงินต้นคงเหลือ</th>
           <th>ดอกเบี้ย/เดือน</th>
           <th>วันที่เริ่ม</th>
           <th>วันที่ผ่านมา</th>
           <th>ดอกเบี้ยสะสม</th>
           <th>ดอกเบี้ยเดือนหน้า</th>
           <th>ครบกำหนดถัดไป</th>
+          <th>เพิ่มการคืนเงินต้น</th>
+          <th>ลบ</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -122,52 +124,79 @@
   <script>
     const form = document.getElementById('loanForm');
     const tableBody = document.querySelector('#summaryTable tbody');
-    const loans = JSON.parse(localStorage.getItem('loans') || '[]');
+    let loans = JSON.parse(localStorage.getItem('loans') || '[]');
 
     function formatDate(dateStr) {
       const d = new Date(dateStr);
       return d.toLocaleDateString('th-TH');
     }
 
+    function getTotalPaid(loan) {
+      return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
+    }
+
     function calcSummary() {
       tableBody.innerHTML = '';
       const now = new Date();
 
-      loans.forEach(loan => {
+      loans.forEach((loan, index) => {
+        const totalPaid = getTotalPaid(loan);
+        const netPrincipal = loan.principal - totalPaid;
         const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
-        const interestPerDay = (loan.principal * loan.rate / 100) / 30;
+        const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
         const accumulated = (interestPerDay * daysPassed).toFixed(2);
-        const nextMonth = (loan.principal * loan.rate / 100).toFixed(2);
+        const nextMonth = (netPrincipal * loan.rate / 100).toFixed(2);
 
         const nextDue = new Date(loan.startDate);
         nextDue.setMonth(nextDue.getMonth() + 1);
 
-        const row = `
-          <tr>
-            <td>${loan.name}</td>
-            <td>${loan.principal.toLocaleString()}</td>
-            <td>${loan.rate}%</td>
-            <td>${formatDate(loan.startDate)}</td>
-            <td>${daysPassed} วัน</td>
-            <td>${parseFloat(accumulated).toLocaleString()}</td>
-            <td>${parseFloat(nextMonth).toLocaleString()}</td>
-            <td>${formatDate(nextDue)}</td>
-          </tr>
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${loan.name}</td>
+          <td>${netPrincipal.toLocaleString()}</td>
+          <td>${loan.rate}%</td>
+          <td>${formatDate(loan.startDate)}</td>
+          <td>${daysPassed} วัน</td>
+          <td>${parseFloat(accumulated).toLocaleString()}</td>
+          <td>${parseFloat(nextMonth).toLocaleString()}</td>
+          <td>${formatDate(nextDue)}</td>
+          <td><button onclick="addRepayment(${index})">➕</button></td>
+          <td><button onclick="deleteLoan(${index})">🗑️</button></td>
         `;
-        tableBody.innerHTML += row;
+        tableBody.appendChild(row);
       });
+    }
+
+    function deleteLoan(index) {
+      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบลูกหนี้คนนี้?')) {
+        loans.splice(index, 1);
+        localStorage.setItem('loans', JSON.stringify(loans));
+        calcSummary();
+      }
+    }
+
+    function addRepayment(index) {
+      const amount = prompt('กรุณากรอกจำนวนเงินที่คืน (บาท):');
+      const date = new Date().toISOString();
+      if (!isNaN(amount) && parseFloat(amount) > 0) {
+        if (!loans[index].repayments) loans[index].repayments = [];
+        loans[index].repayments.push({ amount: parseFloat(amount), date });
+        localStorage.setItem('loans', JSON.stringify(loans));
+        calcSummary();
+      } else {
+        alert('กรุณากรอกจำนวนที่ถูกต้อง');
+      }
     }
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-
       const newLoan = {
         name: document.getElementById('name').value,
         principal: parseFloat(document.getElementById('principal').value),
         rate: parseFloat(document.getElementById('rate').value),
         startDate: document.getElementById('startDate').value,
+        repayments: [],
       };
-
       loans.push(newLoan);
       localStorage.setItem('loans', JSON.stringify(loans));
       form.reset();
