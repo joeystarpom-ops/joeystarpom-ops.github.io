@@ -2,194 +2,179 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="theme-color" content="#FFD5EC" />
-  <title>ผู้จัดการบัญชีเงินกู้</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loan Tracker App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: 'Kanit', sans-serif;
-      background-color: #FFF6F0;
-      background-image: url('https://drive.google.com/uc?export=view&id=1aDOu1pysxZjtBhgZgnFYx14gF99_0CT6');
-      background-repeat: no-repeat;
-      background-size: cover;
-      background-position: center center;
-      background-attachment: fixed;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
     body {
-      padding: 1rem;
-      box-sizing: border-box;
-      max-width: 430px;
-      margin: auto;
-      backdrop-filter: blur(6px);
-      background-color: rgba(255, 255, 255, 0.6);
-      border-radius: 16px;
+      margin: 0;
+      font-family: 'Prompt', sans-serif;
+      background-image: url('https://i.postimg.cc/mr5PY1FR/IMG-2575.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #4a4a4a;
+    }
+    .container {
+      max-width: 850px;
+      margin: 3rem auto;
+      background: rgba(255, 245, 248, 0.9);
+      border-radius: 25px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     }
     h1 {
-      color: #FF914D;
       text-align: center;
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
-      text-shadow: 1px 1px #fff4e3;
+      color: #ff7b9c;
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
     }
     label {
       display: block;
       margin-top: 1rem;
-      color: #FF4081;
-      font-size: 0.9rem;
+      font-weight: 600;
+      color: #b85d8c;
     }
-    input, textarea {
+    input, select, textarea {
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.6rem;
+      border: 1px solid #eec8d9;
+      border-radius: 12px;
       margin-top: 0.3rem;
-      border: 1px solid #FFB6C1;
-      border-radius: 8px;
-      background-color: #fff;
       font-size: 1rem;
-    }
-    input[type="date"] {
-      font-family: 'Kanit', sans-serif;
+      background-color: #fff0f6;
     }
     button {
-      margin-top: 1rem;
-      padding: 0.6rem 1.2rem;
-      background: linear-gradient(45deg, #FFC371, #FF5F6D);
-      color: white;
+      margin-top: 1.5rem;
+      background-color: #ff91ae;
       border: none;
-      border-radius: 10px;
-      cursor: pointer;
+      padding: 0.8rem 1.8rem;
+      border-radius: 20px;
       font-weight: bold;
+      cursor: pointer;
+      color: #fff;
+      transition: background-color 0.3s ease;
       font-size: 1rem;
     }
+    button:hover {
+      background-color: #ff6e95;
+    }
     table {
-      border-collapse: collapse;
-      width: 100%;
       margin-top: 2rem;
+      width: 100%;
+      border-collapse: collapse;
       background-color: #fffafc;
-      border-radius: 14px;
-      font-size: 0.9rem;
+      border-radius: 15px;
+      overflow: hidden;
     }
     th, td {
-      border: 1px solid #f8c1d7;
-      padding: 0.4rem;
-      text-align: left;
-    }
-    th {
-      background-color: #FFE5C1;
-      color: #D35400;
-    }
-    .summary {
-      margin-top: 2rem;
-      background: #FFF0DA;
-      padding: 1rem;
-      border: 2px dashed #FFC58A;
-      border-radius: 10px;
+      padding: 0.9rem;
+      text-align: center;
+      border-bottom: 1px solid #f3d6e0;
       font-size: 0.95rem;
     }
-    .delete-btn {
-      background: #FF5F6D;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 5px;
-      cursor: pointer;
+    th {
+      background-color: #ffd4e3;
+      color: #7c3a54;
     }
-    .repay-btn {
-      background: #FFC371;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 5px;
-      cursor: pointer;
+    tr:last-child td {
+      border-bottom: none;
     }
   </style>
 </head>
 <body>
-  <h1>ผู้จัดการบัญชีเงินกู้</h1>
-  <label>ชื่อ</label><input id="name">
-  <label>เงินต้น (บาท)</label><input id="principal" type="number">
-  <label>ดอกเบี้ยต่อเดือน (%)</label><input id="interestRate" type="number">
-  <label>วันที่เริ่มยืม</label><input id="startDate" type="date">
-  <label>สถานะ</label><input id="status">
-  <label>หมายเหตุ</label><textarea id="note"></textarea>
-  <button onclick="addDebtor()">➕ เพิ่มลูกหนี้</button>
+  <div class="container">
+    <h1>🧸 บัญชีเงินกู้น่ารักๆ 💗</h1>
 
-  <div id="debtorTable"></div>
+    <form id="loanForm">
+      <label>ชื่อ</label>
+      <input type="text" id="name" required />
+
+      <label>เงินต้น (บาท)</label>
+      <input type="number" id="principal" required />
+
+      <label>ดอกเบี้ยต่อเดือน (%)</label>
+      <input type="number" id="rate" step="0.01" required />
+
+      <label>วันที่เริ่มยืม</label>
+      <input type="date" id="startDate" required />
+
+      <button type="submit">➕ เพิ่มลูกหนี้</button>
+    </form>
+
+    <table id="summaryTable">
+      <thead>
+        <tr>
+          <th>ชื่อ</th>
+          <th>เงินต้น</th>
+          <th>ดอกเบี้ย/เดือน</th>
+          <th>วันที่เริ่ม</th>
+          <th>วันที่ผ่านมา</th>
+          <th>ดอกเบี้ยสะสม</th>
+          <th>ดอกเบี้ยเดือนหน้า</th>
+          <th>ครบกำหนดถัดไป</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
   <script>
-    const debtors = JSON.parse(localStorage.getItem('debtors')) || [];
-    const save = () => localStorage.setItem('debtors', JSON.stringify(debtors));
+    const form = document.getElementById('loanForm');
+    const tableBody = document.querySelector('#summaryTable tbody');
+    const loans = JSON.parse(localStorage.getItem('loans') || '[]');
 
-    function addDebtor() {
-      const name = document.getElementById('name').value;
-      const principal = parseFloat(document.getElementById('principal').value);
-      const interestRate = parseFloat(document.getElementById('interestRate').value);
-      const startDate = document.getElementById('startDate').value;
-      const status = document.getElementById('status').value;
-      const note = document.getElementById('note').value;
-
-      if (!name || !principal || !interestRate || !startDate) return alert('กรอกข้อมูลให้ครบ');
-      debtors.push({ name, principal, interestRate, startDate, status, note, interestHistory: [], principalRepayment: [] });
-      save();
-      render();
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('th-TH');
     }
 
-    function deleteDebtor(index) {
-      if (confirm('ลบลูกหนี้คนนี้?')) {
-        debtors.splice(index, 1);
-        save();
-        render();
-      }
-    }
+    function calcSummary() {
+      tableBody.innerHTML = '';
+      const now = new Date();
 
-    function repayPrincipal(index) {
-      const amount = parseFloat(prompt('ใส่จำนวนเงินที่คืน'));
-      if (!amount || amount <= 0) return;
-      debtors[index].principalRepayment.push({ date: new Date().toISOString().split('T')[0], amount });
-      debtors[index].principal -= amount;
-      if (debtors[index].principal < 0) debtors[index].principal = 0;
-      save();
-      render();
-    }
+      loans.forEach(loan => {
+        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
+        const interestPerDay = (loan.principal * loan.rate / 100) / 30;
+        const accumulated = (interestPerDay * daysPassed).toFixed(2);
+        const nextMonth = (loan.principal * loan.rate / 100).toFixed(2);
 
-    function calculateInterest(debtor) {
-      const start = new Date(debtor.startDate);
-      const today = new Date();
-      const days = Math.floor((today - start) / (1000 * 60 * 60 * 24));
-      const dailyRate = (debtor.interestRate / 100) / 30;
-      const accumulated = debtor.principal * dailyRate * days;
-      const expectedNextMonth = debtor.principal * (debtor.interestRate / 100);
-      const nextDue = new Date(start);
-      nextDue.setMonth(start.getMonth() + Math.floor(days / 30) + 1);
-      return { days, accumulated: accumulated.toFixed(2), expectedNextMonth: expectedNextMonth.toFixed(2), nextDue: nextDue.toISOString().split('T')[0] };
-    }
+        const nextDue = new Date(loan.startDate);
+        nextDue.setMonth(nextDue.getMonth() + 1);
 
-    function render() {
-      let html = '<table><tr><th>ชื่อ</th><th>เงินต้น</th><th>ดอกเบี้ย/เดือน</th><th>เริ่มยืม</th><th>วันผ่าน</th><th>ดอกเบี้ยสะสม</th><th>ดอกเบี้ยเดือนหน้า</th><th>ครบกำหนดถัดไป</th><th>จัดการ</th></tr>';
-      let totalPrincipal = 0, totalInterest = 0, totalNext = 0;
-      debtors.forEach((d, i) => {
-        const { days, accumulated, expectedNextMonth, nextDue } = calculateInterest(d);
-        totalPrincipal += d.principal;
-        totalInterest += parseFloat(accumulated);
-        totalNext += parseFloat(expectedNextMonth);
-        html += `<tr><td>${d.name}</td><td>${d.principal.toFixed(2)}</td><td>${d.interestRate}%</td><td>${d.startDate}</td><td>${days}</td><td>${accumulated}</td><td>${expectedNextMonth}</td><td>${nextDue}</td>
-        <td><button class='delete-btn' onclick='deleteDebtor(${i})'>ลบ</button>
-        <button class='repay-btn' onclick='repayPrincipal(${i})'>คืนเงินต้น</button></td></tr>`;
+        const row = `
+          <tr>
+            <td>${loan.name}</td>
+            <td>${loan.principal.toLocaleString()}</td>
+            <td>${loan.rate}%</td>
+            <td>${formatDate(loan.startDate)}</td>
+            <td>${daysPassed} วัน</td>
+            <td>${parseFloat(accumulated).toLocaleString()}</td>
+            <td>${parseFloat(nextMonth).toLocaleString()}</td>
+            <td>${formatDate(nextDue)}</td>
+          </tr>
+        `;
+        tableBody.innerHTML += row;
       });
-      html += `</table><div class='summary'>
-        <strong>รวมเงินต้น:</strong> ${totalPrincipal.toFixed(2)} บาท<br>
-        <strong>รวมดอกเบี้ยสะสม:</strong> ${totalInterest.toFixed(2)} บาท<br>
-        <strong>คาดว่าจะได้รับเดือนถัดไป:</strong> ${totalNext.toFixed(2)} บาท
-      </div>`;
-      document.getElementById('debtorTable').innerHTML = html;
     }
 
-    render();
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const newLoan = {
+        name: document.getElementById('name').value,
+        principal: parseFloat(document.getElementById('principal').value),
+        rate: parseFloat(document.getElementById('rate').value),
+        startDate: document.getElementById('startDate').value,
+      };
+
+      loans.push(newLoan);
+      localStorage.setItem('loans', JSON.stringify(loans));
+      form.reset();
+      calcSummary();
+    });
+
+    calcSummary();
   </script>
 </body>
 </html>
