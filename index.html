@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#4CAF50" />
   <title>ผู้จัดการบัญชีเงินกู้</title>
-  <link rel="manifest" href="manifest.json">
   <style>
     body { font-family: sans-serif; padding: 1rem; }
     h1 { color: #4CAF50; }
@@ -15,6 +14,7 @@
     table { border-collapse: collapse; width: 100%; margin-top: 2rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
     .summary { margin-top: 2rem; background: #f9f9f9; padding: 1rem; border: 1px solid #ddd; }
+    .delete-btn { background: red; color: white; border: none; padding: 4px 8px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -43,13 +43,23 @@
         <th>ดอกเบี้ยสะสม</th>
         <th>ดอกเบี้ยเดือนถัดไป</th>
         <th>วันครบกำหนดถัดไป</th>
+        <th>ลบ</th>
       </tr>
     </thead>
     <tbody id="reportBody"></tbody>
   </table>
 
   <script>
-    const debtors = [];
+    let debtors = [];
+
+    window.addEventListener('load', () => {
+      const saved = localStorage.getItem('debtors');
+      if (saved) {
+        debtors = JSON.parse(saved);
+        debtors.forEach(d => d.startDate = new Date(d.startDate));
+        updateReport();
+      }
+    });
 
     document.getElementById('loanForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -57,15 +67,37 @@
       const name = document.getElementById('name').value;
       const principal = parseFloat(document.getElementById('principal').value);
       const interestRate = parseFloat(document.getElementById('interestRate').value);
-      const startDate = new Date(document.getElementById('startDate').value);
+      const startDateInput = document.getElementById('startDate').value;
+      const startDate = new Date(startDateInput);
       const status = document.getElementById('status').value;
       const note = document.getElementById('note').value;
 
       debtors.push({ name, principal, interestRate, startDate, status, note });
+      saveData();
       updateReport();
 
       this.reset();
     });
+
+    function deleteDebtor(index) {
+      if (confirm("คุณต้องการลบลูกหนี้รายนี้จริงหรือไม่?")) {
+        debtors.splice(index, 1);
+        saveData();
+        updateReport();
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('debtors', JSON.stringify(debtors));
+    }
+
+    function formatThaiDate(d) {
+      const date = new Date(d);
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = (date.getFullYear() + 543).toString();
+      return `${day}/${month}/${year}`;
+    }
 
     function updateReport() {
       const tbody = document.getElementById('reportBody');
@@ -75,7 +107,7 @@
       let totalAccumulatedInterest = 0;
       let totalNextMonthInterest = 0;
 
-      debtors.forEach(d => {
+      debtors.forEach((d, index) => {
         const now = new Date();
         const daysPassed = Math.floor((now - d.startDate) / (1000 * 60 * 60 * 24));
         const dailyInterest = d.principal * (d.interestRate / 100) / 30;
@@ -93,11 +125,12 @@
           <td>${d.name}</td>
           <td>${d.principal.toLocaleString()}</td>
           <td>${d.interestRate.toFixed(2)}%</td>
-          <td>${d.startDate.toISOString().split('T')[0]}</td>
+          <td>${formatThaiDate(d.startDate)}</td>
           <td>${daysPassed}</td>
           <td>${accumulatedInterest.toFixed(2)}</td>
           <td>${nextMonthInterest.toFixed(2)}</td>
-          <td>${nextDueDate.toISOString().split('T')[0]}</td>
+          <td>${formatThaiDate(nextDueDate)}</td>
+          <td><button class="delete-btn" onclick="deleteDebtor(${index})">ลบ</button></td>
         </tr>`;
 
         tbody.insertAdjacentHTML('beforeend', row);
