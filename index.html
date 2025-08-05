@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4CAF50" />
+  <title>ผู้จัดการบัญชีเงินกู้</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    h1 { color: #4CAF50; }
+    label { display: block; margin-top: 1rem; }
+    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.5rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 2rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    .summary { margin-top: 2rem; background: #f9f9f9; padding: 1rem; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <h1>ผู้จัดการบัญชีเงินกู้</h1>
+
+  <form id="loanForm">
+    <label>ชื่อ <input type="text" id="name" required></label>
+    <label>เงินต้น <input type="number" id="principal" required></label>
+    <label>ดอกเบี้ยต่อเดือน (%) <input type="number" step="0.01" id="interestRate" required></label>
+    <label>วันที่เริ่มยืม <input type="date" id="startDate" required></label>
+    <label>สถานะเงินต้น <input type="text" id="status"></label>
+    <label>หมายเหตุ <textarea id="note"></textarea></label>
+    <button type="submit">เพิ่มลูกหนี้</button>
+  </form>
+
+  <div class="summary" id="summary"></div>
+
+  <table id="reportTable">
+    <thead>
+      <tr>
+        <th>ชื่อ</th>
+        <th>เงินต้น</th>
+        <th>ดอกเบี้ย/เดือน</th>
+        <th>วันที่เริ่มยืม</th>
+        <th>จำนวนวันที่ผ่าน</th>
+        <th>ดอกเบี้ยสะสม</th>
+        <th>ดอกเบี้ยเดือนถัดไป</th>
+        <th>วันครบกำหนดถัดไป</th>
+      </tr>
+    </thead>
+    <tbody id="reportBody"></tbody>
+  </table>
+
+  <script>
+    const debtors = [];
+
+    document.getElementById('loanForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const principal = parseFloat(document.getElementById('principal').value);
+      const interestRate = parseFloat(document.getElementById('interestRate').value);
+      const startDate = new Date(document.getElementById('startDate').value);
+      const status = document.getElementById('status').value;
+      const note = document.getElementById('note').value;
+
+      debtors.push({ name, principal, interestRate, startDate, status, note });
+      updateReport();
+
+      this.reset();
+    });
+
+    function updateReport() {
+      const tbody = document.getElementById('reportBody');
+      tbody.innerHTML = '';
+
+      let totalPrincipal = 0;
+      let totalAccumulatedInterest = 0;
+      let totalNextMonthInterest = 0;
+
+      debtors.forEach(d => {
+        const now = new Date();
+        const daysPassed = Math.floor((now - d.startDate) / (1000 * 60 * 60 * 24));
+        const dailyInterest = d.principal * (d.interestRate / 100) / 30;
+        const accumulatedInterest = dailyInterest * daysPassed;
+        const nextMonthInterest = d.principal * (d.interestRate / 100);
+
+        const nextDueDate = new Date(d.startDate);
+        nextDueDate.setMonth(nextDueDate.getMonth() + Math.floor(daysPassed / 30) + 1);
+
+        totalPrincipal += d.principal;
+        totalAccumulatedInterest += accumulatedInterest;
+        totalNextMonthInterest += nextMonthInterest;
+
+        const row = `<tr>
+          <td>${d.name}</td>
+          <td>${d.principal.toLocaleString()}</td>
+          <td>${d.interestRate.toFixed(2)}%</td>
+          <td>${d.startDate.toISOString().split('T')[0]}</td>
+          <td>${daysPassed}</td>
+          <td>${accumulatedInterest.toFixed(2)}</td>
+          <td>${nextMonthInterest.toFixed(2)}</td>
+          <td>${nextDueDate.toISOString().split('T')[0]}</td>
+        </tr>`;
+
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+
+      document.getElementById('summary').innerHTML = `
+        <strong>สรุปทั้งหมด</strong><br>
+        เงินต้นรวม: ${totalPrincipal.toLocaleString()} บาท<br>
+        ดอกเบี้ยสะสมจนถึงวันนี้: ${totalAccumulatedInterest.toFixed(2)} บาท<br>
+        ดอกเบี้ยเดือนถัดไป: ${totalNextMonthInterest.toFixed(2)} บาท
+      `;
+    }
+  </script>
+</body>
+</html>
