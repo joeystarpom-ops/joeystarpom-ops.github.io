@@ -37,13 +37,6 @@
       margin-bottom: 1rem;
       text-shadow: 1px 1px #fff4e3;
     }
-    .character, .footer-character {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .character img, .footer-character img {
-      width: 100px;
-    }
     label {
       display: block;
       margin-top: 1rem;
@@ -56,7 +49,6 @@
       margin-top: 0.3rem;
       border: 1px solid #FFB6C1;
       border-radius: 8px;
-      font-family: 'Kanit', sans-serif;
       background-color: #fff;
       font-size: 1rem;
     }
@@ -73,11 +65,6 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
-    button:hover {
-      transform: scale(1.05);
     }
     table {
       border-collapse: collapse;
@@ -85,7 +72,6 @@
       margin-top: 2rem;
       background-color: #fffafc;
       border-radius: 14px;
-      box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
       font-size: 0.9rem;
     }
     th, td {
@@ -124,6 +110,86 @@
   </style>
 </head>
 <body>
-  <!-- ส่วนเนื้อหา app เช่น ฟอร์ม ปุ่ม ตาราง จะวางไว้ตรงนี้ -->
+  <h1>ผู้จัดการบัญชีเงินกู้</h1>
+  <label>ชื่อ</label><input id="name">
+  <label>เงินต้น (บาท)</label><input id="principal" type="number">
+  <label>ดอกเบี้ยต่อเดือน (%)</label><input id="interestRate" type="number">
+  <label>วันที่เริ่มยืม</label><input id="startDate" type="date">
+  <label>สถานะ</label><input id="status">
+  <label>หมายเหตุ</label><textarea id="note"></textarea>
+  <button onclick="addDebtor()">➕ เพิ่มลูกหนี้</button>
+
+  <div id="debtorTable"></div>
+
+  <script>
+    const debtors = JSON.parse(localStorage.getItem('debtors')) || [];
+    const save = () => localStorage.setItem('debtors', JSON.stringify(debtors));
+
+    function addDebtor() {
+      const name = document.getElementById('name').value;
+      const principal = parseFloat(document.getElementById('principal').value);
+      const interestRate = parseFloat(document.getElementById('interestRate').value);
+      const startDate = document.getElementById('startDate').value;
+      const status = document.getElementById('status').value;
+      const note = document.getElementById('note').value;
+
+      if (!name || !principal || !interestRate || !startDate) return alert('กรอกข้อมูลให้ครบ');
+      debtors.push({ name, principal, interestRate, startDate, status, note, interestHistory: [], principalRepayment: [] });
+      save();
+      render();
+    }
+
+    function deleteDebtor(index) {
+      if (confirm('ลบลูกหนี้คนนี้?')) {
+        debtors.splice(index, 1);
+        save();
+        render();
+      }
+    }
+
+    function repayPrincipal(index) {
+      const amount = parseFloat(prompt('ใส่จำนวนเงินที่คืน'));
+      if (!amount || amount <= 0) return;
+      debtors[index].principalRepayment.push({ date: new Date().toISOString().split('T')[0], amount });
+      debtors[index].principal -= amount;
+      if (debtors[index].principal < 0) debtors[index].principal = 0;
+      save();
+      render();
+    }
+
+    function calculateInterest(debtor) {
+      const start = new Date(debtor.startDate);
+      const today = new Date();
+      const days = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+      const dailyRate = (debtor.interestRate / 100) / 30;
+      const accumulated = debtor.principal * dailyRate * days;
+      const expectedNextMonth = debtor.principal * (debtor.interestRate / 100);
+      const nextDue = new Date(start);
+      nextDue.setMonth(start.getMonth() + Math.floor(days / 30) + 1);
+      return { days, accumulated: accumulated.toFixed(2), expectedNextMonth: expectedNextMonth.toFixed(2), nextDue: nextDue.toISOString().split('T')[0] };
+    }
+
+    function render() {
+      let html = '<table><tr><th>ชื่อ</th><th>เงินต้น</th><th>ดอกเบี้ย/เดือน</th><th>เริ่มยืม</th><th>วันผ่าน</th><th>ดอกเบี้ยสะสม</th><th>ดอกเบี้ยเดือนหน้า</th><th>ครบกำหนดถัดไป</th><th>จัดการ</th></tr>';
+      let totalPrincipal = 0, totalInterest = 0, totalNext = 0;
+      debtors.forEach((d, i) => {
+        const { days, accumulated, expectedNextMonth, nextDue } = calculateInterest(d);
+        totalPrincipal += d.principal;
+        totalInterest += parseFloat(accumulated);
+        totalNext += parseFloat(expectedNextMonth);
+        html += `<tr><td>${d.name}</td><td>${d.principal.toFixed(2)}</td><td>${d.interestRate}%</td><td>${d.startDate}</td><td>${days}</td><td>${accumulated}</td><td>${expectedNextMonth}</td><td>${nextDue}</td>
+        <td><button class='delete-btn' onclick='deleteDebtor(${i})'>ลบ</button>
+        <button class='repay-btn' onclick='repayPrincipal(${i})'>คืนเงินต้น</button></td></tr>`;
+      });
+      html += `</table><div class='summary'>
+        <strong>รวมเงินต้น:</strong> ${totalPrincipal.toFixed(2)} บาท<br>
+        <strong>รวมดอกเบี้ยสะสม:</strong> ${totalInterest.toFixed(2)} บาท<br>
+        <strong>คาดว่าจะได้รับเดือนถัดไป:</strong> ${totalNext.toFixed(2)} บาท
+      </div>`;
+      document.getElementById('debtorTable').innerHTML = html;
+    }
+
+    render();
+  </script>
 </body>
 </html>
