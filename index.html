@@ -1,3 +1,4 @@
+<!-- เริ่มต้น HTML ทั้งหมด -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -10,20 +11,18 @@
     body {
       font-family: 'Kanit', sans-serif;
       padding: 1rem;
-      background-color: #FFF6FA;
-      background-image: linear-gradient(to bottom, #fff6fa, #ffe4ec);
+      background-color: #FFF6F0;
+      background-image: url('https://cdn.jsdelivr.net/gh/joeyloan/assets@main/bg-yellow-cartoon.jpg');
+      background-repeat: repeat;
+      background-size: contain;
       background-attachment: fixed;
     }
     h1 {
-      color: #FF4081;
+      color: #FF914D;
       text-align: center;
-      font-size: 2rem;
+      font-size: 2.2rem;
       margin-bottom: 1rem;
-      animation: pop 1s ease;
-    }
-    @keyframes pop {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+      text-shadow: 1px 1px #fff4e3;
     }
     .character, .footer-character {
       text-align: center;
@@ -31,11 +30,6 @@
     }
     .character img, .footer-character img {
       width: 120px;
-      animation: float 3s ease-in-out infinite;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
     }
     label {
       display: block;
@@ -51,20 +45,18 @@
       font-family: 'Kanit', sans-serif;
       background-color: #fff;
     }
-    input[type="date"] {
-      font-family: 'Kanit', sans-serif;
-    }
     button {
       margin-top: 1rem;
-      padding: 0.6rem 1rem;
-      background: #FF4081;
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(45deg, #FFA76C, #FFD4A9);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
       font-size: 1rem;
-      transition: transform 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
     }
     button:hover {
       transform: scale(1.05);
@@ -73,10 +65,9 @@
       border-collapse: collapse;
       width: 100%;
       margin-top: 2rem;
-      background-color: #fff;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background-color: #fffafc;
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);
     }
     th, td {
       border: 1px solid #f8c1d7;
@@ -84,14 +75,14 @@
       text-align: left;
     }
     th {
-      background-color: #ffd9e8;
-      color: #d81b60;
+      background-color: #FFE5C1;
+      color: #D35400;
     }
     .summary {
       margin-top: 2rem;
-      background: #ffeaf4;
+      background: #FFF0DA;
       padding: 1rem;
-      border: 2px dashed #ff9ecf;
+      border: 2px dashed #FFC58A;
       border-radius: 10px;
       font-size: 1rem;
     }
@@ -114,9 +105,9 @@
   </style>
 </head>
 <body>
-  <h1>💖 ผู้จัดการบัญชีเงินกู้ ฉบับน่ารัก 💖</h1>
+  <h1>💖 ผู้จัดการบัญชีเงินกู้ 💖</h1>
   <div class="character">
-    <img src="https://i.imgur.com/fxQ6KpL.png" alt="cute character" />
+    <img src="https://i.imgur.com/Z7kGG79.png" alt="cute character" />
   </div>
 
   <form id="loanForm">
@@ -132,7 +123,7 @@
   <div id="summary" class="summary"></div>
 
   <div class="footer-character">
-    <img src="https://i.imgur.com/fxQ6KpL.png" alt="cute mascot footer">
+    <img src="https://i.imgur.com/Z7kGG79.png" alt="cute mascot footer">
   </div>
 
   <script>
@@ -188,22 +179,16 @@
     }
 
     function repay(index) {
-  const amount = parseFloat(prompt("ลูกหนี้คืนเงินต้นจำนวนเท่าไร?"));
-  if (!isNaN(amount)) {
-    const today = new Date().toISOString().split('T')[0];
-    debtors[index].principal -= amount;
-    debtors[index].repaymentHistory = debtors[index].repaymentHistory || [];
-    debtors[index].repaymentHistory.push({ date: today, amount });
-    if (debtors[index].principal <= 0) {
-      debtors[index].principal = 0;
-      debtors[index].status = "ปิดบัญชี";
-    } else {
-      debtors[index].status = "คืนบางส่วน";
-    }
-    saveData();
-    render();
-  }
-} else {
+      const amount = parseFloat(prompt("ลูกหนี้คืนเงินต้นจำนวนเท่าไร?"));
+      if (!isNaN(amount)) {
+        const today = new Date().toISOString().split('T')[0];
+        debtors[index].principal -= amount;
+        debtors[index].repaymentHistory = debtors[index].repaymentHistory || [];
+        debtors[index].repaymentHistory.push({ date: today, amount });
+        if (debtors[index].principal <= 0) {
+          debtors[index].principal = 0;
+          debtors[index].status = "ปิดบัญชี";
+        } else {
           debtors[index].status = "คืนบางส่วน";
         }
         saveData();
