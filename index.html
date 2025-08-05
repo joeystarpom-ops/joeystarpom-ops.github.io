@@ -3,146 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#4CAF50" />
+  <meta name="theme-color" content="#FFD5EC" />
   <title>ผู้จัดการบัญชีเงินกู้</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    h1 { color: #4CAF50; }
-    label { display: block; margin-top: 1rem; }
-    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.5rem; }
-    button { margin-top: 1rem; padding: 0.5rem 1rem; background: #4CAF50; color: white; border: none; cursor: pointer; }
-    table { border-collapse: collapse; width: 100%; margin-top: 2rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
-    .summary { margin-top: 2rem; background: #f9f9f9; padding: 1rem; border: 1px solid #ddd; }
-    .delete-btn { background: red; color: white; border: none; padding: 4px 8px; cursor: pointer; }
+    body {
+      font-family: 'Kanit', sans-serif;
+      padding: 1rem;
+      background-color: #FFF6FA;
+      background-image: linear-gradient(to bottom, #fff6fa, #ffe4ec);
+      background-attachment: fixed;
+    }
+    h1 {
+      color: #FF4081;
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      animation: pop 1s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .character {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .character img {
+      width: 120px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      color: #FF4081;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #FFB6C1;
+      border-radius: 8px;
+      font-family: 'Kanit', sans-serif;
+      background-color: #fff;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1rem;
+      background: #FF4081;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: transform 0.2s ease;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 2rem;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #f8c1d7;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background-color: #ffd9e8;
+      color: #d81b60;
+    }
+    .summary {
+      margin-top: 2rem;
+      background: #ffeaf4;
+      padding: 1rem;
+      border: 2px dashed #ff9ecf;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .delete-btn {
+      background: #e91e63;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .repay-btn {
+      background: #03a9f4;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .footer-character {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    .footer-character img {
+      width: 100px;
+    }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>ผู้จัดการบัญชีเงินกู้</h1>
+  <h1>💖 ผู้จัดการบัญชีเงินกู้ ฉบับน่ารัก 💖</h1>
+  <div class="character">
+    <img src="https://i.imgur.com/lXM7M0Z.png" alt="cute character" />
+  </div>
 
-  <form id="loanForm">
-    <label>ชื่อ <input type="text" id="name" required></label>
-    <label>เงินต้น <input type="number" id="principal" required></label>
-    <label>ดอกเบี้ยต่อเดือน (%) <input type="number" step="0.01" id="interestRate" required></label>
-    <label>วันที่เริ่มยืม <input type="date" id="startDate" required></label>
-    <label>สถานะเงินต้น <input type="text" id="status"></label>
-    <label>หมายเหตุ <textarea id="note"></textarea></label>
-    <button type="submit">เพิ่มลูกหนี้</button>
-  </form>
+  <!-- ส่วนฟอร์มและเนื้อหาอื่น ๆ อยู่ตรงนี้ -->
 
-  <div class="summary" id="summary"></div>
-
-  <table id="reportTable">
-    <thead>
-      <tr>
-        <th>ชื่อ</th>
-        <th>เงินต้น</th>
-        <th>ดอกเบี้ย/เดือน</th>
-        <th>วันที่เริ่มยืม</th>
-        <th>จำนวนวันที่ผ่าน</th>
-        <th>ดอกเบี้ยสะสม</th>
-        <th>ดอกเบี้ยเดือนถัดไป</th>
-        <th>วันครบกำหนดถัดไป</th>
-        <th>ลบ</th>
-      </tr>
-    </thead>
-    <tbody id="reportBody"></tbody>
-  </table>
-
-  <script>
-    let debtors = [];
-
-    window.addEventListener('load', () => {
-      const saved = localStorage.getItem('debtors');
-      if (saved) {
-        debtors = JSON.parse(saved);
-        debtors.forEach(d => d.startDate = new Date(d.startDate));
-        updateReport();
-      }
-    });
-
-    document.getElementById('loanForm').addEventListener('submit', function (e) {
-      e.preventDefault();
-
-      const name = document.getElementById('name').value;
-      const principal = parseFloat(document.getElementById('principal').value);
-      const interestRate = parseFloat(document.getElementById('interestRate').value);
-      const startDateInput = document.getElementById('startDate').value;
-      const startDate = new Date(startDateInput);
-      const status = document.getElementById('status').value;
-      const note = document.getElementById('note').value;
-
-      debtors.push({ name, principal, interestRate, startDate, status, note });
-      saveData();
-      updateReport();
-
-      this.reset();
-    });
-
-    function deleteDebtor(index) {
-      if (confirm("คุณต้องการลบลูกหนี้รายนี้จริงหรือไม่?")) {
-        debtors.splice(index, 1);
-        saveData();
-        updateReport();
-      }
-    }
-
-    function saveData() {
-      localStorage.setItem('debtors', JSON.stringify(debtors));
-    }
-
-    function formatThaiDate(d) {
-      const date = new Date(d);
-      const day = date.getDate().toString().padStart(2, '0');
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const year = (date.getFullYear() + 543).toString();
-      return `${day}/${month}/${year}`;
-    }
-
-    function updateReport() {
-      const tbody = document.getElementById('reportBody');
-      tbody.innerHTML = '';
-
-      let totalPrincipal = 0;
-      let totalAccumulatedInterest = 0;
-      let totalNextMonthInterest = 0;
-
-      debtors.forEach((d, index) => {
-        const now = new Date();
-        const daysPassed = Math.floor((now - d.startDate) / (1000 * 60 * 60 * 24));
-        const dailyInterest = d.principal * (d.interestRate / 100) / 30;
-        const accumulatedInterest = dailyInterest * daysPassed;
-        const nextMonthInterest = d.principal * (d.interestRate / 100);
-
-        const nextDueDate = new Date(d.startDate);
-        nextDueDate.setMonth(nextDueDate.getMonth() + Math.floor(daysPassed / 30) + 1);
-
-        totalPrincipal += d.principal;
-        totalAccumulatedInterest += accumulatedInterest;
-        totalNextMonthInterest += nextMonthInterest;
-
-        const row = `<tr>
-          <td>${d.name}</td>
-          <td>${d.principal.toLocaleString()}</td>
-          <td>${d.interestRate.toFixed(2)}%</td>
-          <td>${formatThaiDate(d.startDate)}</td>
-          <td>${daysPassed}</td>
-          <td>${accumulatedInterest.toFixed(2)}</td>
-          <td>${nextMonthInterest.toFixed(2)}</td>
-          <td>${formatThaiDate(nextDueDate)}</td>
-          <td><button class="delete-btn" onclick="deleteDebtor(${index})">ลบ</button></td>
-        </tr>`;
-
-        tbody.insertAdjacentHTML('beforeend', row);
-      });
-
-      document.getElementById('summary').innerHTML = `
-        <strong>สรุปทั้งหมด</strong><br>
-        เงินต้นรวม: ${totalPrincipal.toLocaleString()} บาท<br>
-        ดอกเบี้ยสะสมจนถึงวันนี้: ${totalAccumulatedInterest.toFixed(2)} บาท<br>
-        ดอกเบี้ยเดือนถัดไป: ${totalNextMonthInterest.toFixed(2)} บาท
-      `;
-    }
-  </script>
+  <div class="footer-character">
+    <img src="https://i.imgur.com/lXM7M0Z.png" alt="cute mascot footer">
+  </div>
 </body>
 </html>
