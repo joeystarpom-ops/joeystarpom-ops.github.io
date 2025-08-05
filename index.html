@@ -7,7 +7,6 @@
   <title>ผู้จัดการบัญชีเงินกู้</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
   <style>
-    /* [ธีมการตกแต่งเหมือนเดิมตาม Mood & Tone น่ารัก] */
     body {
       font-family: 'Kanit', sans-serif;
       padding: 1rem;
@@ -51,6 +50,9 @@
       border-radius: 8px;
       font-family: 'Kanit', sans-serif;
       background-color: #fff;
+    }
+    input[type="date"] {
+      font-family: 'Kanit', sans-serif;
     }
     button {
       margin-top: 1rem;
@@ -114,14 +116,14 @@
 <body>
   <h1>💖 ผู้จัดการบัญชีเงินกู้ ฉบับน่ารัก 💖</h1>
   <div class="character">
-    <img src="https://i.imgur.com/lXM7M0Z.png" alt="cute character" />
+    <img src="https://i.imgur.com/fxQ6KpL.png" alt="cute character" />
   </div>
 
   <form id="loanForm">
     <label>ชื่อ: <input type="text" id="name" required /></label>
     <label>เงินต้น: <input type="number" id="principal" required /></label>
     <label>ดอกเบี้ยต่อเดือน (%): <input type="number" id="interestRate" required /></label>
-    <label>วันที่เริ่มยืม (วว/ดด/ปปปป): <input type="text" id="startDate" placeholder="01/08/2568" required /></label>
+    <label>วันที่เริ่มยืม: <input type="date" id="startDate" required /></label>
     <label>หมายเหตุ: <textarea id="note"></textarea></label>
     <button type="submit">➕ เพิ่มลูกหนี้</button>
   </form>
@@ -130,7 +132,7 @@
   <div id="summary" class="summary"></div>
 
   <div class="footer-character">
-    <img src="https://i.imgur.com/lXM7M0Z.png" alt="cute mascot footer">
+    <img src="https://i.imgur.com/fxQ6KpL.png" alt="cute mascot footer">
   </div>
 
   <script>
@@ -140,9 +142,8 @@
       localStorage.setItem('debtors', JSON.stringify(debtors));
     }
 
-    function parseDateTH(dateStr) {
-      const [d, m, y] = dateStr.split('/');
-      return new Date(parseInt(y) - 543, parseInt(m) - 1, parseInt(d));
+    function parseDate(dateStr) {
+      return new Date(dateStr);
     }
 
     function render() {
@@ -151,7 +152,7 @@
       const now = new Date();
 
       debtors.forEach((d, i) => {
-        const start = parseDateTH(d.startDate);
+        const start = parseDate(d.startDate);
         const days = Math.floor((now - start) / 86400000);
         const dailyRate = (d.principal * d.interestRate / 100) / 30;
         const interestAccrued = dailyRate * days;
@@ -166,7 +167,7 @@
           <td>${d.name}</td>
           <td>${d.principal.toFixed(2)}</td>
           <td>${d.interestRate}%</td>
-          <td>${d.startDate}</td>
+          <td>${new Date(d.startDate).toLocaleDateString()}</td>
           <td>${d.status}</td>
           <td>${days}</td>
           <td>${interestAccrued.toFixed(2)}</td>
@@ -187,13 +188,22 @@
     }
 
     function repay(index) {
-      const amount = parseFloat(prompt("ลูกหนี้คืนเงินต้นจำนวนเท่าไร?"));
-      if (!isNaN(amount)) {
-        debtors[index].principal -= amount;
-        if (debtors[index].principal <= 0) {
-          debtors[index].principal = 0;
-          debtors[index].status = "ปิดบัญชี";
-        } else {
+  const amount = parseFloat(prompt("ลูกหนี้คืนเงินต้นจำนวนเท่าไร?"));
+  if (!isNaN(amount)) {
+    const today = new Date().toISOString().split('T')[0];
+    debtors[index].principal -= amount;
+    debtors[index].repaymentHistory = debtors[index].repaymentHistory || [];
+    debtors[index].repaymentHistory.push({ date: today, amount });
+    if (debtors[index].principal <= 0) {
+      debtors[index].principal = 0;
+      debtors[index].status = "ปิดบัญชี";
+    } else {
+      debtors[index].status = "คืนบางส่วน";
+    }
+    saveData();
+    render();
+  }
+} else {
           debtors[index].status = "คืนบางส่วน";
         }
         saveData();
@@ -217,7 +227,7 @@
       const startDate = document.getElementById("startDate").value;
       const note = document.getElementById("note").value;
 
-      debtors.push({ name, principal, interestRate, startDate, note, status: "ค้างชำระ" });
+      debtors.push({ name, principal, interestRate, startDate, note, status: "ค้างชำระ", repaymentHistory: [] });
       saveData();
       this.reset();
       render();
