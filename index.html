@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>บัญชีเงินกู้ ยู่ยี่</title>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -20,10 +20,15 @@
     .container {
       max-width: 950px;
       margin: 3rem auto;
-      background: rgba(255, 245, 248, 0.85);
+      background: rgba(255, 245, 248, 0.75);
       border-radius: 25px;
       padding: 2rem;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 1s ease-in-out;
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     h1 {
       text-align: center;
@@ -39,7 +44,6 @@
       padding: 1rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       box-sizing: border-box;
-      margin-bottom: 1.5rem;
     }
     .chart-wrapper canvas {
       width: 100% !important;
@@ -55,26 +59,55 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
     }
-    label { font-weight: 600; color: #b85d8c; display: block; margin-top: 1rem; }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    .popup.show {
+      display: flex;
+      opacity: 1;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #b85d8c;
+    }
     input {
       width: 100%;
       padding: 0.6rem;
       border: 1px solid #fbcfd9;
       border-radius: 14px;
+      margin-top: 0.3rem;
       font-size: 1rem;
       background-color: #fff0f6;
+      transition: all 0.3s ease;
       box-shadow: inset 0 1px 2px rgba(255, 180, 200, 0.3);
-      margin-top: 0.3rem;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 8px #ffaec8;
+      background-color: #ffe5ec;
     }
     button {
+      position: relative;
       margin-top: 1.5rem;
       background-color: #ffb3ab;
       border: none;
       padding: 0.8rem 1.8rem;
       border-radius: 20px;
       font-weight: bold;
-      color: #fff;
       cursor: pointer;
+      color: #fff;
+      transition: all 0.2s ease-in-out;
       font-size: 1rem;
       margin-right: 0.5rem;
       box-shadow: 0 6px #f18d94;
@@ -88,64 +121,30 @@
       transform: translateY(4px);
       box-shadow: 0 2px #e28a8a;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-      background-color: #fffafc;
-      border-radius: 15px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 0.9rem;
-      text-align: center;
-      border-bottom: 1px solid #f3d6e0;
-      font-size: 0.9rem;
-    }
-    th {
-      background-color: #ffd4e3;
-      color: #7c3a54;
-    }
-    .due-soon {
-      background-color: #ffcccc !important;
-    }
-    .popup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 99999;
-    }
-    .popup.show { display: flex; }
-    #summaryFooter {
-      padding: 1rem;
-      font-size: 0.95rem;
-      text-align: left;
-      background-color: #fff5f8;
-      line-height: 1.6;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🧸 บัญชีเงินกู้ ยู่ยี่ 💗</h1>
+
     <div class="chart-wrapper">
       <canvas id="loanChart"></canvas>
     </div>
-    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" class="anim-character" />
+
+    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" alt="คนใส่แว่นถือแฟ้ม" class="anim-character" />
+
     <form id="loanForm">
       <label>ชื่อ</label>
       <input type="text" id="name" required />
       <label>เงินต้น (บาท)</label>
       <input type="number" id="principal" required />
       <label>ดอกเบี้ยต่อเดือน (%)</label>
-      <input type="number" id="rate" required />
+      <input type="number" id="rate" step="0.01" required />
       <label>วันที่เริ่มยืม</label>
       <input type="date" id="startDate" required />
       <button type="submit">➕ เพิ่มลูกหนี้</button>
+      <button type="button" onclick="downloadExcel()">📥 ดาวน์โหลด Excel</button>
+      <input type="file" id="uploadFile" accept=".json" onchange="uploadData(event)" style="display:inline-block;margin-top:1rem" />
     </form>
     <table id="summaryTable">
       <thead>
@@ -165,146 +164,167 @@
       </thead>
       <tbody></tbody>
       <tfoot>
-        <tr><td colspan="11" id="summaryFooter">—</td></tr>
+        <tr><td colspan="11" id="summaryFooter" style="font-size: 0.9rem; text-align: left; line-height: 1.6;"></td></tr>
       </tfoot>
     </table>
-  </div>
 
-  <div class="popup" id="popup">
-    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGVzMHFqZmVtMW5wZDJ3bjh1cm8xZXhkeGk2c2lxM2Jtc3hxbmFyaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/oDatDPoi5nTy2Ypcrw/giphy.gif" />
+    <div class="popup" id="popup">
+      <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGVzMHFqZmVtMW5wZDJ3bjh1cm8xZXhkeGk2c2lxM2Jtc3hxbmFyaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/oDatDPoi5nTy2Ypcrw/giphy.gif" alt="popup">
+    </div>
   </div>
 
   <script>
-    let loans = JSON.parse(localStorage.getItem("loans") || "[]");
+    let loans = JSON.parse(localStorage.getItem('loans') || '[]');
+    const interestPaidFlags = JSON.parse(localStorage.getItem('interestFlags') || '{}');
 
-    function formatDate(d) {
-      return new Date(d).toLocaleDateString("th-TH");
-    }
-
-    function getCurrentKey() {
-      const now = new Date();
-      return now.getFullYear() + "-" + (now.getMonth() + 1).toString().padStart(2, '0');
-    }
-
-    function showPopup() {
-      const popup = document.getElementById("popup");
-      popup.classList.add("show");
-      setTimeout(() => popup.classList.remove("show"), 2000);
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('th-TH');
     }
 
     function getTotalPaid(loan) {
       return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
     }
 
-    function calcSummary() {
-      const tbody = document.querySelector("#summaryTable tbody");
-      tbody.innerHTML = "";
-      const now = new Date();
-      const chartData = [];
-      let totalRemain = 0, totalAcc = 0, totalNext = 0;
-      let dueSoon = false;
-
-      loans.forEach((l, i) => {
-        const paid = getTotalPaid(l);
-        const remain = l.principal - paid;
-        const passed = Math.floor((now - new Date(l.startDate)) / (1000 * 60 * 60 * 24));
-        const perDay = (remain * l.rate / 100) / 30;
-        const acc = parseFloat((perDay * passed).toFixed(2));
-        const nextMonth = parseFloat((remain * l.rate / 100).toFixed(2));
-        const dueDate = new Date(l.startDate);
-        dueDate.setMonth(dueDate.getMonth() + Math.floor(passed / 30) + 1);
-        const key = getCurrentKey();
-        const isDue = (dueDate - now) / (1000 * 60 * 60 * 24) <= 5 && l.paidInterestFor !== key;
-        if (isDue) dueSoon = true;
-
-        const row = document.createElement("tr");
-        if (isDue) row.classList.add("due-soon");
-        row.innerHTML = `
-          <td>${l.name}</td>
-          <td>${remain.toLocaleString()}</td>
-          <td>${l.rate}%</td>
-          <td>${formatDate(l.startDate)}</td>
-          <td>${passed} วัน</td>
-          <td>${acc.toLocaleString()}</td>
-          <td>${nextMonth.toLocaleString()}</td>
-          <td>${formatDate(dueDate)}</td>
-          <td><button onclick="addRepayment(${i})">➕</button></td>
-          <td>${l.paidInterestFor === key
-            ? '<button style="background:#ccc;color:#777;cursor:default">จ่ายแล้ว</button>'
-            : '<button style="background:#c8f7dc;color:#235;border:none;padding:5px 10px;border-radius:15px;font-weight:bold" onclick="markPaid('+i+')">จ่ายดอกแล้ว</button>'}</td>
-          <td><button onclick="deleteLoan(${i})">🗑️</button></td>`;
-        tbody.appendChild(row);
-
-        chartData.push({ name: l.name, remaining: remain });
-        totalRemain += remain;
-        totalAcc += acc;
-        totalNext += nextMonth;
-      });
-
-      const footer = document.getElementById("summaryFooter");
-      footer.innerHTML = `
-        📌 เงินต้นคงเหลือรวม: ${totalRemain.toLocaleString()} บาท<br>
-        📌 ดอกเบี้ยสะสม: ${totalAcc.toLocaleString()} บาท<br>
-        📌 ดอกเบี้ยเดือนหน้า: ${totalNext.toLocaleString()} บาท`;
-
-      if (chartData.length > 0) {
-        const ctx = document.getElementById("loanChart").getContext("2d");
-        if (window.loanChart) window.loanChart.destroy?.();
-        window.loanChart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: chartData.map(x => x.name),
-            datasets: [{
-              label: "เงินต้นคงเหลือ",
-              data: chartData.map(x => x.remaining),
-              backgroundColor: "#ff9eb2",
-              borderRadius: 10
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-      }
-
-      if (dueSoon) showPopup();
+    function showPopup() {
+      const popup = document.getElementById('popup');
+      if (!popup) return;
+      popup.style.display = 'flex';
+      requestAnimationFrame(() => popup.classList.add('show'));
+      setTimeout(() => {
+        popup.classList.remove('show');
+        setTimeout(() => { popup.style.display = 'none'; }, 300);
+      }, 2000);
     }
 
-    function markPaid(index) {
-      loans[index].paidInterestFor = getCurrentKey();
-      localStorage.setItem("loans", JSON.stringify(loans));
-      calcSummary();
+    function updateChart(data) {
+      const ctx = document.getElementById('loanChart').getContext('2d');
+      if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
+      const max = Math.max(...data.map(d => d.remaining));
+      const bgColors = data.map(l => {
+        const ratio = l.remaining / max;
+        const intensity = Math.floor(158 + ratio * (255 - 158));
+        return `rgba(255, ${255 - intensity}, ${178 - ratio * 80}, 1)`;
+      });
+
+      window.loanChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(l => l.name),
+          datasets: [{
+            label: 'เงินต้นคงเหลือ (บาท)',
+            data: data.map(l => l.remaining),
+            backgroundColor: bgColors,
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+    function calcSummary() {
+      const tableBody = document.querySelector('#summaryTable tbody');
+      tableBody.innerHTML = '';
+      const now = new Date();
+      const chartData = [];
+
+      let totalPrincipal = 0;
+      let totalInterest = 0;
+      let totalNextMonth = 0;
+
+      loans.forEach((loan, index) => {
+        const totalPaid = getTotalPaid(loan);
+        const netPrincipal = loan.principal - totalPaid;
+        totalPrincipal += netPrincipal;
+
+        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
+        const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
+        const accumulated = parseFloat((interestPerDay * daysPassed).toFixed(2));
+        const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+        const nextDue = new Date(loan.startDate);
+        nextDue.setMonth(nextDue.getMonth() + 1);
+
+        totalInterest += accumulated;
+        totalNextMonth += nextMonth;
+
+        const isDueSoon = daysPassed >= 30 && !interestPaidFlags[loan.name];
+        const row = document.createElement('tr');
+        if (isDueSoon) row.classList.add('due-soon');
+
+        row.innerHTML = `
+          <td style="white-space: nowrap;">${loan.name}</td>
+          <td>${netPrincipal.toLocaleString()}</td>
+          <td>${loan.rate}%</td>
+          <td>${formatDate(loan.startDate)}</td>
+          <td>${daysPassed} วัน</td>
+          <td>${accumulated.toLocaleString()}</td>
+          <td style="color:green">${nextMonth.toLocaleString()}</td>
+          <td>${formatDate(nextDue)}</td>
+          <td><button onclick="addRepayment(${index})">➕</button></td>
+          <td><button style="background:#ccffcc;border:none;border-radius:12px;padding:4px 8px;cursor:pointer" onclick="clearInterest('${loan.name}')">✔️</button></td>
+          <td><button onclick="deleteLoan(${index})">🗑️</button></td>
+        `;
+        tableBody.appendChild(row);
+        chartData.push({ name: loan.name, remaining: netPrincipal });
+      });
+
+      if (chartData.length > 0) updateChart(chartData);
+
+      const footer = document.getElementById('summaryFooter');
+      footer.innerHTML = `
+        <div><b>เงินต้นคงเหลือรวม:</b> ${totalPrincipal.toLocaleString()} บาท</div>
+        <div><b>ดอกเบี้ยสะสม:</b> ${totalInterest.toLocaleString()} บาท</div>
+        <div><b>ดอกเบี้ยเดือนหน้า:</b> <span style="color:green">${totalNextMonth.toLocaleString()}</span> บาท</div>
+      `;
     }
 
     function addRepayment(index) {
-      const amount = prompt("กรุณากรอกจำนวนเงินต้นที่คืน:");
-      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) return;
+      const amount = prompt('กรุณากรอกจำนวนเงินต้นที่คืน (บาท):');
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        alert('กรุณากรอกจำนวนที่ถูกต้อง');
+        return;
+      }
       if (!loans[index].repayments) loans[index].repayments = [];
       loans[index].repayments.push({ amount: parseFloat(amount), date: new Date().toISOString() });
-      localStorage.setItem("loans", JSON.stringify(loans));
+      localStorage.setItem('loans', JSON.stringify(loans));
+      calcSummary();
+    }
+
+    function clearInterest(name) {
+      interestPaidFlags[name] = true;
+      localStorage.setItem('interestFlags', JSON.stringify(interestPaidFlags));
       calcSummary();
     }
 
     function deleteLoan(index) {
-      if (confirm("คุณแน่ใจว่าต้องการลบลูกหนี้คนนี้?")) {
+      if (confirm('คุณแน่ใจว่าต้องการลบลูกหนี้คนนี้?')) {
+        const name = loans[index].name;
         loans.splice(index, 1);
-        localStorage.setItem("loans", JSON.stringify(loans));
+        delete interestPaidFlags[name];
+        localStorage.setItem('loans', JSON.stringify(loans));
+        localStorage.setItem('interestFlags', JSON.stringify(interestPaidFlags));
         calcSummary();
       }
     }
 
-    document.getElementById("loanForm").addEventListener("submit", e => {
+    document.getElementById('loanForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const loan = {
-        name: document.getElementById("name").value,
-        principal: parseFloat(document.getElementById("principal").value),
-        rate: parseFloat(document.getElementById("rate").value),
-        startDate: document.getElementById("startDate").value,
-        repayments: [],
+      const newLoan = {
+        name: document.getElementById('name').value,
+        principal: parseFloat(document.getElementById('principal').value),
+        rate: parseFloat(document.getElementById('rate').value),
+        startDate: document.getElementById('startDate').value,
+        repayments: []
       };
-      loans.push(loan);
-      localStorage.setItem("loans", JSON.stringify(loans));
+      loans.push(newLoan);
+      localStorage.setItem('loans', JSON.stringify(loans));
       e.target.reset();
-      calcSummary();
       showPopup();
+      calcSummary();
     });
 
     calcSummary();
