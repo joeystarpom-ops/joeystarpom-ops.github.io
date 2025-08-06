@@ -12,13 +12,15 @@
     .container { max-width: 1000px; margin: 3rem auto; background: rgba(255, 245, 248, 0.9); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); }
     h1 { text-align: center; color: #ff7b9c; margin-bottom: 1rem; }
     .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 15px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-bottom: 1rem; }
+    .anim-character { display: block; margin: 10px auto; width: 160px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 9999; }
     .popup.show { display: flex; }
     .popup img { max-width: 250px; border-radius: 15px; }
     label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
     input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 14px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; }
     input:focus { outline: none; box-shadow: 0 0 8px #ffaec8; background-color: #ffe5ec; }
-    button { padding: 0.5rem 1rem; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-right: 0.2rem; }
+    button { padding: 0.5rem 1rem; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin: 0.2rem; }
     .btn-principal { background-color: #ffb3ab; color: #fff; }
     .btn-interest { background-color: #a8e6a1; color: #000; }
     .btn-interest.paid { background-color: #b0b0b0; color: #fff; }
@@ -27,12 +29,16 @@
     th, td { padding: 0.6rem; text-align: center; border-bottom: 1px solid #f3d6e0; font-size: 0.85rem; }
     th { background-color: #ffd4e3; color: #7c3a54; }
     tfoot td { background-color: #ffe5ec; font-weight: bold; font-size: 1rem; color: #7c3a54; text-align: left; padding: 1rem; }
+    .val-gold { color: #d4af37; }
+    .val-green { color: #28a745; }
+    .val-blue { color: #007bff; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🧸 บัญชีเงินกู้ ยู่ยี่ 💗</h1>
     <div class="chart-wrapper"><canvas id="loanChart"></canvas></div>
+    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" class="anim-character" />
 
     <form id="loanForm">
       <label>ชื่อ</label>
@@ -55,6 +61,7 @@
           <th>เงินต้นคงเหลือ</th>
           <th>ดอกเบี้ย/เดือน</th>
           <th>ดอกค้าง</th>
+          <th>ดอกสะสม</th>
           <th>ครบกำหนดถัดไป</th>
           <th>คืนเงินต้น</th>
           <th>จ่ายดอก</th>
@@ -63,7 +70,7 @@
         </tr>
       </thead>
       <tbody></tbody>
-      <tfoot><tr><td colspan="9" id="summaryFooter">—</td></tr></tfoot>
+      <tfoot><tr><td colspan="10" id="summaryFooter">—</td></tr></tfoot>
     </table>
   </div>
 
@@ -88,19 +95,24 @@
       tableBody.innerHTML = '';
       const now = new Date();
       const chartData = [];
-      let totalPrincipal = 0, totalOwedInterest = 0;
+      let totalPrincipal = 0, totalOwedInterest = 0, totalAccumulated = 0;
 
       loans.forEach((loan, index) => {
         const totalPaid = getTotalPaid(loan);
         let netPrincipal = loan.principal - totalPaid;
         if (netPrincipal < 0) netPrincipal = 0;
 
-        const interestThisMonth = (netPrincipal * loan.rate / 100);
+        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
+        const dailyInterest = (netPrincipal * loan.rate / 100) / 30;
+        const accumulatedInterest = dailyInterest * daysPassed;
+
+        const monthlyInterest = (netPrincipal * loan.rate / 100);
         loan.interestOwed = loan.interestOwed || 0;
-        const totalDueInterest = interestThisMonth + loan.interestOwed;
+        const totalDueInterest = monthlyInterest + loan.interestOwed;
 
         totalPrincipal += netPrincipal;
         totalOwedInterest += totalDueInterest;
+        totalAccumulated += accumulatedInterest;
 
         const loanStartDate = new Date(loan.startDate);
         const monthsSinceStart = Math.floor((now.getFullYear() - loanStartDate.getFullYear()) * 12 + (now.getMonth() - loanStartDate.getMonth()));
@@ -114,7 +126,8 @@
             <td>${loan.name}</td>
             <td>${netPrincipal.toLocaleString()}</td>
             <td>${loan.rate}%</td>
-            <td>${totalDueInterest.toFixed(2)}</td>
+            <td>${loan.interestOwed.toFixed(2)}</td>
+            <td>${accumulatedInterest.toFixed(2)}</td>
             <td>${formatDate(nextDue)}</td>
             <td><button class="btn-principal" onclick="addRepayment(${index})">คืนเงินต้น</button></td>
             <td><button class="btn-interest ${loan.paidInterest ? 'paid' : ''}" onclick="payInterest(${index})">${loan.paidInterest ? 'จ่ายแล้ว' : 'จ่ายดอก'}</button></td>
@@ -125,8 +138,9 @@
       });
 
       document.getElementById('summaryFooter').innerHTML =
-        `💰 เงินต้นรวม: ${totalPrincipal.toLocaleString()} บาท<br>` +
-        `💵 ดอกเบี้ยค้างรวม: ${totalOwedInterest.toFixed(2)} บาท`;
+        `💰 เงินต้นรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
+        `📈 ดอกเบี้ยสะสม: <span class="val-green">${totalAccumulated.toFixed(2)} บาท</span><br>` +
+        `🔮 ดอกเบี้ยค้างรวม: <span class="val-blue">${totalOwedInterest.toFixed(2)} บาท</span>`;
 
       updateChart(chartData);
       localStorage.setItem('loans', JSON.stringify(loans));
@@ -166,9 +180,9 @@
       if (!amount || isNaN(amount) || parseFloat(amount) <= 0) return alert('จำนวนไม่ถูกต้อง');
 
       const netPrincipal = loans[index].principal - getTotalPaid(loans[index]);
-      const interestThisMonth = (netPrincipal * loans[index].rate / 100);
+      const monthlyInterest = (netPrincipal * loans[index].rate / 100);
       loans[index].interestOwed = loans[index].interestOwed || 0;
-      const totalDue = interestThisMonth + loans[index].interestOwed;
+      const totalDue = monthlyInterest + loans[index].interestOwed;
 
       if (parseFloat(amount) < totalDue) {
         loans[index].interestOwed = totalDue - parseFloat(amount);
@@ -186,7 +200,8 @@
       const loan = loans[index];
       let html = `${loan.name} - ประวัติการชำระ:\\n`;
       (loan.repayments || []).forEach(r => {
-        html += `${formatDate(r.date)} - ${r.type === 'principal' ? 'คืนเงินต้น' : 'จ่ายดอก'}: ${r.amount}\\n`;
+        const color = r.type === 'principal' ? '💵' : '💚';
+        html += `${color} ${formatDate(r.date)} - ${r.type === 'principal' ? 'คืนเงินต้น' : 'จ่ายดอก'}: ${r.amount}\\n`;
       });
       alert(html);
     }
@@ -200,10 +215,13 @@
 
     function downloadExcel() {
       const wb = XLSX.utils.book_new();
-      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'ดอกค้าง', 'วันที่เริ่ม']];
+      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'ดอกค้าง', 'ดอกสะสม', 'วันที่เริ่ม']];
       loans.forEach(loan => {
         const netPrincipal = loan.principal - getTotalPaid(loan);
-        wsData.push([loan.name, netPrincipal, loan.rate + '%', loan.interestOwed || 0, formatDate(loan.startDate)]);
+        const daysPassed = Math.floor((new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
+        const dailyInterest = (netPrincipal * loan.rate / 100) / 30;
+        const accumulatedInterest = dailyInterest * daysPassed;
+        wsData.push([loan.name, netPrincipal, loan.rate + '%', loan.interestOwed || 0, accumulatedInterest.toFixed(2), formatDate(loan.startDate)]);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Loan Summary');
       XLSX.writeFile(wb, 'loan_summary.xlsx');
