@@ -25,7 +25,10 @@
     table { margin-top: 2rem; width: 100%; border-collapse: collapse; background-color: #fffafc; border-radius: 15px; overflow: hidden; }
     th, td { padding: 0.9rem; text-align: center; border-bottom: 1px solid #f3d6e0; font-size: 0.95rem; }
     th { background-color: #ffd4e3; color: #7c3a54; }
-    tfoot td { background-color: #ffe5ec; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; padding: 1rem; }
+    tfoot td { background-color: #ffe5ec; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; padding: 1rem; line-height: 1.8; }
+    .val-gold { color: #d4af37; }
+    .val-green { color: #28a745; }
+    .val-blue { color: #007bff; }
   </style>
 </head>
 <body>
@@ -151,9 +154,9 @@
       });
 
       document.getElementById('summaryFooter').innerHTML =
-        `💰 <b>เงินต้นคงเหลือรวม:</b> ${totalPrincipal.toLocaleString()} บาท &nbsp;|&nbsp; ` +
-        `📈 <b>ดอกเบี้ยสะสม:</b> ${totalAccumulated.toLocaleString()} บาท &nbsp;|&nbsp; ` +
-        `🔮 <b>ดอกเบี้ยเดือนหน้า:</b> ${totalNextMonth.toLocaleString()} บาท`;
+        `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
+        `📈 ดอกเบี้ยสะสม: <span class="val-green">${totalAccumulated.toLocaleString()} บาท</span><br>` +
+        `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span>`;
 
       if (chartData.length > 0) updateChart(chartData);
       else if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
