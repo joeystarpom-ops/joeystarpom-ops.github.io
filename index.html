@@ -11,13 +11,16 @@
     body {
       margin: 0;
       font-family: 'Prompt', sans-serif;
-      background: #ffeef2;
+      background-image: url('https://i.postimg.cc/mr5PY1FR/IMG-2575.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
       color: #4a4a4a;
     }
     .container {
       max-width: 950px;
       margin: 3rem auto;
-      background: #fffafc;
+      background: rgba(255, 245, 248, 0.75);
       border-radius: 25px;
       padding: 2rem;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -26,24 +29,45 @@
       text-align: center;
       color: #ff7b9c;
       font-size: 2.2rem;
-      margin-bottom: 1.5rem;
     }
     .chart-wrapper {
       width: 100%;
       height: 300px;
-      background: #ffffff;
+      background: #fff;
       border-radius: 15px;
       padding: 1rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
     .chart-wrapper canvas {
       width: 100% !important;
       height: 100% !important;
     }
+    .anim-character {
+      display: block;
+      margin: 0 auto 2rem;
+      width: 180px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
+    input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 14px; background-color: #fff0f6; font-size: 1rem; }
+    button {
+      margin-top: 1rem;
+      background-color: #ffb3ab;
+      border: none;
+      padding: 0.6rem 1.4rem;
+      border-radius: 20px;
+      font-weight: bold;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover { background-color: #ffcad4; }
     table {
-      margin-top: 2rem;
       width: 100%;
+      margin-top: 2rem;
       border-collapse: collapse;
       background-color: #fffafc;
       border-radius: 15px;
@@ -54,42 +78,42 @@
       text-align: center;
       border-bottom: 1px solid #f3d6e0;
       font-size: 0.95rem;
-    }
-    th {
-      background-color: #ffd4e3;
-      color: #7c3a54;
       white-space: nowrap;
     }
-    tr:last-child td {
-      border-bottom: none;
+    th { background-color: #ffd4e3; color: #7c3a54; }
+    tr.due-soon { background-color: #ffe5e5 !important; }
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
     }
-    .due-soon {
-      background-color: #ffcccc !important;
+    .popup img {
+      max-width: 300px;
+      border-radius: 10px;
     }
+    .popup.show { display: flex; }
     .summary-box {
-      margin-top: 1rem;
-      font-size: 0.9rem;
-      line-height: 1.7;
-      color: #444;
+      margin-top: 1.5rem;
+      background-color: #ffeef3;
+      border-radius: 15px;
+      padding: 1rem 1.5rem;
+      line-height: 1.8;
+      font-size: 0.95rem;
     }
-    .highlight {
-      color: green;
-      font-weight: bold;
-    }
-    .btn-repay {
-      background-color: #ffb3d1;
-      border: none;
-      border-radius: 12px;
-      color: white;
-      padding: 5px 10px;
-      cursor: pointer;
-    }
+    .summary-box span { font-weight: bold; }
+    .summary-box .next-interest { color: green; }
     .btn-interest {
-      background-color: #b2e2a4;
+      background-color: #c6f5d7;
+      color: #245d3c;
+      font-weight: bold;
+      padding: 0.4rem 1rem;
+      border-radius: 16px;
       border: none;
-      border-radius: 12px;
-      color: #1d1d1d;
-      padding: 5px 10px;
       cursor: pointer;
     }
   </style>
@@ -102,6 +126,24 @@
       <canvas id="loanChart"></canvas>
     </div>
 
+    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif"
+         alt="คนใส่แว่นถือแฟ้ม"
+         class="anim-character" />
+
+    <!-- ฟอร์มเพิ่มลูกหนี้ -->
+    <form id="loanForm">
+      <label>ชื่อ</label>
+      <input type="text" id="name" required />
+      <label>เงินต้น (บาท)</label>
+      <input type="number" id="principal" required />
+      <label>ดอกเบี้ยต่อเดือน (%)</label>
+      <input type="number" id="rate" step="0.01" required />
+      <label>วันที่เริ่มยืม</label>
+      <input type="date" id="startDate" required />
+      <button type="submit">➕ เพิ่มลูกหนี้</button>
+    </form>
+
+    <!-- ตารางลูกหนี้ -->
     <table id="summaryTable">
       <thead>
         <tr>
@@ -112,59 +154,57 @@
           <th>วันที่ผ่านมา</th>
           <th>ดอกเบี้ยสะสม</th>
           <th>ดอกเบี้ยเดือนหน้า</th>
-          <th>ครบกำหนดถัดไป</th>
+          <th>ครบกำหนด</th>
           <th>คืนเงินต้น</th>
-          <th>จ่ายดอกแล้ว</th>
+          <th>จ่ายดอก</th>
           <th>ลบ</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
 
-    <div class="summary-box" id="summaryFooter"></div>
+    <!-- รายงานสรุป -->
+    <div class="summary-box" id="summaryBox"></div>
+
+    <!-- Pop-up -->
+    <div class="popup" id="popup">
+      <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGVzMHFqZmVtMW5wZDJ3bjh1cm8xZXhkeGk2c2lxM2Jtc3hxbmFyaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/oDatDPoi5nTy2Ypcrw/giphy.gif" />
+    </div>
   </div>
 
   <script>
-    const loans = JSON.parse(localStorage.getItem('loans') || '[]');
+    let loans = JSON.parse(localStorage.getItem("loans") || "[]");
 
     function formatDate(dateStr) {
       const d = new Date(dateStr);
-      return d.toLocaleDateString('th-TH');
+      return d.toLocaleDateString("th-TH");
     }
 
-    function getTotalPaid(loan) {
-      return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
-    }
-
-    function getChartColors(data) {
-      const max = Math.max(...data);
-      return data.map(value => {
-        const intensity = value / max;
-        return `rgba(255, ${180 - intensity * 50}, ${200 - intensity * 80}, 0.8)`;
-      });
+    function showPopup() {
+      const popup = document.getElementById("popup");
+      popup.classList.add("show");
+      setTimeout(() => popup.classList.remove("show"), 2000);
     }
 
     function updateChart(data) {
-      const ctx = document.getElementById('loanChart').getContext('2d');
-      if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
+      const ctx = document.getElementById("loanChart").getContext("2d");
+      if (window.loanChart) window.loanChart.destroy();
 
-      const values = data.map(l => l.remaining);
-      const colors = getChartColors(values);
+      const maxAmount = Math.max(...data.map(l => l.amount));
+      const baseColor = 'rgba(255, 155, 180,';
 
       window.loanChart = new Chart(ctx, {
-        type: 'bar',
+        type: "bar",
         data: {
           labels: data.map(l => l.name),
           datasets: [{
-            label: 'เงินต้นคงเหลือ (บาท)',
-            data: values,
-            backgroundColor: colors,
-            borderRadius: 10
+            label: "เงินต้นคงเหลือ",
+            data: data.map(l => l.amount),
+            backgroundColor: data.map(l => `${baseColor}${(0.3 + 0.7 * (l.amount / maxAmount)).toFixed(2)})`)
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: { y: { beginAtZero: true } }
         }
@@ -172,81 +212,93 @@
     }
 
     function calcSummary() {
-      const tbody = document.querySelector('#summaryTable tbody');
-      tbody.innerHTML = '';
       const now = new Date();
-
-      let totalPrincipal = 0, totalInterest = 0, nextMonthInterest = 0;
+      const tbody = document.querySelector("#summaryTable tbody");
+      tbody.innerHTML = "";
+      let totalRemain = 0, totalAcc = 0, totalNext = 0;
       const chartData = [];
 
-      loans.forEach((loan, index) => {
-        const totalPaid = getTotalPaid(loan);
-        const remaining = loan.principal - totalPaid;
-        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
-        const interestPerDay = (remaining * loan.rate / 100) / 30;
-        const accumulated = +(interestPerDay * daysPassed).toFixed(2);
-        const monthly = +(remaining * loan.rate / 100).toFixed(2);
-        const nextDue = new Date(loan.startDate);
-        nextDue.setMonth(nextDue.getMonth() + 1);
+      loans.forEach((loan, i) => {
+        const paid = loan.paid || 0;
+        const remain = loan.principal - paid;
+        const days = Math.floor((now - new Date(loan.start)) / (1000 * 60 * 60 * 24));
+        const daily = (remain * loan.rate / 100) / 30;
+        const acc = +(daily * days).toFixed(2);
+        const next = +(remain * loan.rate / 100).toFixed(2);
+        const dueDate = new Date(loan.start);
+        dueDate.setMonth(dueDate.getMonth() + 1);
 
-        const isDue = now >= nextDue && !loan.lastInterestPaid;
-        const row = document.createElement('tr');
-        if (isDue) row.classList.add('due-soon');
+        totalRemain += remain;
+        totalAcc += acc;
+        totalNext += next;
+
+        const row = document.createElement("tr");
+        if (!loan.interestPaid && now > dueDate) row.classList.add("due-soon");
 
         row.innerHTML = `
           <td>${loan.name}</td>
-          <td>${remaining.toLocaleString()}</td>
+          <td>${remain.toLocaleString()}</td>
           <td>${loan.rate}%</td>
-          <td>${formatDate(loan.startDate)}</td>
-          <td>${daysPassed} วัน</td>
-          <td>${accumulated.toLocaleString()}</td>
-          <td style="color:green;font-weight:bold">${monthly.toLocaleString()}</td>
-          <td>${formatDate(nextDue)}</td>
-          <td><button class="btn-repay" onclick="repay(${index})">➕</button></td>
-          <td><button class="btn-interest" onclick="markInterestPaid(${index})">✔️</button></td>
-          <td><button onclick="remove(${index})">🗑️</button></td>
+          <td>${formatDate(loan.start)}</td>
+          <td>${days} วัน</td>
+          <td>${acc.toLocaleString()}</td>
+          <td>${next.toLocaleString()}</td>
+          <td>${formatDate(dueDate)}</td>
+          <td><button onclick="payPrincipal(${i})">➕</button></td>
+          <td><button class="btn-interest" onclick="markInterestPaid(${i})">✔️</button></td>
+          <td><button onclick="deleteLoan(${i})">🗑️</button></td>
         `;
         tbody.appendChild(row);
 
-        chartData.push({ name: loan.name, remaining });
-
-        totalPrincipal += remaining;
-        totalInterest += accumulated;
-        nextMonthInterest += monthly;
+        chartData.push({ name: loan.name, amount: remain });
       });
 
       updateChart(chartData);
 
-      document.getElementById('summaryFooter').innerHTML = `
-        <div>💰 <strong>เงินต้นคงเหลือรวม:</strong> ${totalPrincipal.toLocaleString()} บาท</div>
-        <div>📊 <strong>ดอกเบี้ยสะสม:</strong> ${totalInterest.toLocaleString()} บาท</div>
-        <div>📆 <strong>ดอกเบี้ยเดือนหน้า:</strong> <span class="highlight">${nextMonthInterest.toLocaleString()}</span> บาท</div>
+      document.getElementById("summaryBox").innerHTML = `
+        <div><span>เงินต้นคงเหลือรวม:</span> ${totalRemain.toLocaleString()} บาท</div>
+        <div><span>ดอกเบี้ยสะสม:</span> ${totalAcc.toLocaleString()} บาท</div>
+        <div><span class="next-interest">ดอกเบี้ยเดือนหน้า:</span> ${totalNext.toLocaleString()} บาท</div>
       `;
     }
 
-    function repay(index) {
-      const val = prompt('จำนวนเงินต้นที่คืน:');
-      const num = parseFloat(val);
-      if (!num || num <= 0) return alert('จำนวนไม่ถูกต้อง');
-      if (!loans[index].repayments) loans[index].repayments = [];
-      loans[index].repayments.push({ amount: num, date: new Date().toISOString() });
-      localStorage.setItem('loans', JSON.stringify(loans));
+    function markInterestPaid(i) {
+      loans[i].interestPaid = true;
+      localStorage.setItem("loans", JSON.stringify(loans));
       calcSummary();
     }
 
-    function markInterestPaid(index) {
-      loans[index].lastInterestPaid = new Date().toISOString();
-      localStorage.setItem('loans', JSON.stringify(loans));
+    function payPrincipal(i) {
+      const amount = +prompt("ใส่จำนวนที่คืน:");
+      if (!amount || isNaN(amount)) return;
+      loans[i].paid = (loans[i].paid || 0) + amount;
+      localStorage.setItem("loans", JSON.stringify(loans));
       calcSummary();
     }
 
-    function remove(index) {
-      if (!confirm('ลบลูกหนี้คนนี้?')) return;
-      loans.splice(index, 1);
-      localStorage.setItem('loans', JSON.stringify(loans));
-      calcSummary();
+    function deleteLoan(i) {
+      if (confirm("ลบลูกหนี้นี้จริงหรือ?")) {
+        loans.splice(i, 1);
+        localStorage.setItem("loans", JSON.stringify(loans));
+        calcSummary();
+      }
     }
 
+    document.getElementById("loanForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const principal = +document.getElementById("principal").value;
+      const rate = +document.getElementById("rate").value;
+      const start = document.getElementById("startDate").value;
+
+      loans.push({ name, principal, rate, start, paid: 0, interestPaid: false });
+      localStorage.setItem("loans", JSON.stringify(loans));
+      showPopup();
+      e.target.reset();
+      calcSummary();
+    });
+
+    // run once on load
     calcSummary();
   </script>
 </body>
