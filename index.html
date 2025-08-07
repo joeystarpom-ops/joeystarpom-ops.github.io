@@ -163,7 +163,7 @@
     <div class="popup-content">
       <h3 class="text-xl font-bold mb-4 text-pink-600">คืนเงินต้น</h3>
       <p id="repaymentMessage" class="mb-4 text-gray-600"></p>
-      <input type="number" id="repaymentAmount" placeholder="กรอกจำนวนเงิน (บาท)" class="mb-4" />
+      <input type="text" id="repaymentAmount" placeholder="กรอกจำนวนเงิน (บาท)" class="mb-4 formatted-input" />
       <div class="btn-group">
         <button onclick="submitRepayment()">ยืนยัน</button>
         <button onclick="hidePopup('repaymentPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
@@ -176,7 +176,7 @@
     <div class="popup-content">
       <h3 class="text-xl font-bold mb-4 text-pink-600">จ่ายดอกเบี้ย</h3>
       <p id="interestMessage" class="mb-4 text-gray-600"></p>
-      <input type="number" id="interestAmount" placeholder="กรอกจำนวนเงินที่จ่าย (บาท)" class="mb-4" />
+      <input type="text" id="interestAmount" placeholder="กรอกจำนวนเงินที่จ่าย (บาท)" class="mb-4 formatted-input" />
       <div class="btn-group">
         <button onclick="submitInterestPayment()">ยืนยัน</button>
         <button onclick="hidePopup('interestPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
@@ -212,7 +212,7 @@
       <div class="popup-content">
           <h3 class="text-xl font-bold mb-4 text-pink-600">แก้ไขรายการ</h3>
           <p id="editPaymentMessage" class="mb-4 text-gray-600"></p>
-          <input type="number" id="editPaymentAmount" placeholder="กรอกจำนวนเงินใหม่ (บาท)" class="mb-4" />
+          <input type="text" id="editPaymentAmount" placeholder="กรอกจำนวนเงินใหม่ (บาท)" class="mb-4 formatted-input" />
           <div class="btn-group">
               <button onclick="submitEditPayment()">บันทึก</button>
               <button onclick="hidePopup('editPaymentPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
@@ -285,18 +285,23 @@
     function showInterestPopup(index) {
         currentLoanIndex = index;
         const loan = loans[index];
-        
-        const accumulated = getAccumulatedInterest(loan);
+        const totalPaidPrincipal = getTotalPaid(loan);
+        let netPrincipal = loan.principal - totalPaidPrincipal;
+        if (netPrincipal < 0) netPrincipal = 0;
+
+        // คำนวณดอกเบี้ยเต็มเดือนตามคำขอ
+        const nextMonthInterest = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
         
         document.getElementById('interestMessage').textContent = 
-          `ดอกเบี้ยสะสมที่ต้องจ่ายสำหรับ ${loan.name} คือ ${accumulated.toLocaleString()} บาท`;
-        document.getElementById('interestAmount').value = accumulated;
+          `จำนวนเงินที่แนะนำให้จ่ายสำหรับ ${loan.name} (ดอกเบี้ยเต็มเดือน):`;
+        document.getElementById('interestAmount').value = nextMonthInterest.toLocaleString();
         showPopup('interestPopup');
     }
-
+    
     // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการจ่ายดอกเบี้ย
     function submitInterestPayment() {
-        const paymentAmount = parseFloat(document.getElementById('interestAmount').value);
+        // ลบเครื่องหมาย , ออกก่อนแปลงเป็นตัวเลข
+        const paymentAmount = parseFloat(document.getElementById('interestAmount').value.replace(/,/g, ''));
         if (isNaN(paymentAmount) || paymentAmount <= 0) {
             alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
             return;
@@ -363,10 +368,13 @@
         
         const hasUnpaidInterest = accumulated > 0;
         
-        const hasMadeFullPaymentThisMonth = loan.interestPayments.some(p => {
+        const hasMadeFullPaymentThisMonth = (loan.interestPayments || []).some(p => {
             const paymentDate = new Date(p.date);
             return p.type === 'full' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
         });
+        
+        // ตรวจสอบว่ามีการจ่ายดอกเบี้ยบางส่วนหรือไม่
+        const hasPartialInterestPaid = (loan.interestPayments || []).some(p => p.amount > 0) && accumulated > 0;
 
         let isOverdue = false;
         if (hasUnpaidInterest && daysUntilDue < -1) {
@@ -376,21 +384,23 @@
         let rowClass = '';
         let cardClass = '';
 
-        // แก้ไขการจัดลำดับเงื่อนไขให้ถูกต้อง
+        // แก้ไขการจัดลำดับเงื่อนไขให้ถูกต้องตามคำขอ
         if (isOverdue) {
             rowClass = 'row-overdue';
             cardClass = 'card-overdue';
+        } else if (hasPartialInterestPaid) { // ลูกหนี้ที่จ่ายดอกเบี้ยบางส่วน
+            rowClass = 'row-partial-paid';
+            cardClass = 'card-partial-paid';
         } else if (daysUntilDue >= 0 && daysUntilDue <= 5 && !hasMadeFullPaymentThisMonth && hasUnpaidInterest) {
             rowClass = 'row-soon-due';
             cardClass = 'card-soon-due';
-        } else if (accumulated > 0) {
-            rowClass = 'row-partial-paid';
-            cardClass = 'card-partial-paid';
         }
         
         let interestButtonText;
         let interestButtonClass;
-        if (accumulated <= 0) {
+        // ตรวจสอบสถานะการจ่ายดอกเบี้ย
+        const totalInterestPaid = (loan.interestPayments || []).reduce((sum, p) => sum + p.amount, 0);
+        if (accumulated <= 0 && totalInterestPaid > 0) { // จ่ายครบแล้ว
             interestButtonText = 'จ่ายแล้ว';
             interestButtonClass = 'btn-paid';
         } else {
@@ -403,7 +413,7 @@
         totalNextMonth += nextMonth;
 
         // Calculate total interest paid for this month
-        loan.interestPayments.forEach(payment => {
+        (loan.interestPayments || []).forEach(payment => {
           const paymentDate = new Date(payment.date);
           if (paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear()) {
             totalInterestPaidThisMonth += payment.amount;
@@ -521,7 +531,8 @@
 
     // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการคืนเงิน
     function submitRepayment() {
-      const amount = document.getElementById('repaymentAmount').value;
+      // ลบเครื่องหมาย , ออกก่อนแปลงเป็นตัวเลข
+      const amount = document.getElementById('repaymentAmount').value.replace(/,/g, '');
       if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
         alert('กรุณากรอกจำนวนที่ถูกต้อง');
         return;
@@ -589,14 +600,15 @@
 
         document.getElementById('editPaymentMessage').textContent =
             `แก้ไขจำนวนเงินสำหรับรายการ "${transactionType === 'repayments' ? 'คืนเงินต้น' : 'จ่ายดอกเบี้ย'}" (${formatDate(transaction.date)}):`;
-        document.getElementById('editPaymentAmount').value = transaction.amount;
+        document.getElementById('editPaymentAmount').value = transaction.amount.toLocaleString();
         
         showPopup('editPaymentPopup');
     }
 
     // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการแก้ไข
     function submitEditPayment() {
-        const newAmount = parseFloat(document.getElementById('editPaymentAmount').value);
+        // ลบเครื่องหมาย , ออกก่อนแปลงเป็นตัวเลข
+        const newAmount = parseFloat(document.getElementById('editPaymentAmount').value.replace(/,/g, ''));
 
         if (isNaN(newAmount) || newAmount <= 0) {
             alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
@@ -743,6 +755,31 @@
         if (id === 'repaymentPopup') document.getElementById('repaymentAmount').value = '';
       }, 300);
     }
+    
+    // ฟังก์ชันสำหรับจัดรูปแบบตัวเลขเมื่อพิมพ์
+    function formatNumberInput(event) {
+        const input = event.target;
+        // ลบอักขระที่ไม่ใช่ตัวเลขและจุดออก
+        let value = input.value.replace(/[^0-9.]/g, '');
+        // ลบจุดทศนิยมที่เกินหนึ่งตำแหน่ง
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        // แปลงเป็นตัวเลขเพื่อจัดรูปแบบ
+        let number = parseFloat(value);
+        if (!isNaN(number)) {
+            input.value = number.toLocaleString('en-US');
+        } else {
+            input.value = '';
+        }
+    }
+
+    // เพิ่ม event listener สำหรับช่องกรอกตัวเลขทั้งหมดที่ต้องการให้จัดรูปแบบอัตโนมัติ
+    document.querySelectorAll('.formatted-input').forEach(input => {
+        input.addEventListener('input', formatNumberInput);
+    });
 
     // เริ่มต้นแสดงผลเมื่อหน้าเว็บโหลดเสร็จ
     calcSummary();
