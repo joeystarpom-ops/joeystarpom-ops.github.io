@@ -49,10 +49,8 @@
     .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px #ff6384; }
     .btn-history { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
     .btn-history:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
-    /* Updated colors for better visibility */
     .row-overdue { background-color: #ffdddd; }
     .row-partial-paid { background-color: #e0d0f0; }
-    /* New class for loans close to the due date */
     .row-soon-due { background-color: #FFCC99; }
     
     /* AI Chat Section */
@@ -74,15 +72,36 @@
     .card-partial-paid { background-color: #e0d0f0; }
     .card-soon-due { background-color: #FFCC99; }
     @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .card-header .name { font-size: 1.3rem; font-weight: bold; color: #7c3a54; }
+    
+    /* === โค้ดที่แก้ไขเพื่อจัดชื่อให้อยู่ตรงกลาง === */
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .card-header .name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #7c3a54;
+      white-space: nowrap; /* ป้องกันชื่อยาวๆ ตกบรรทัด */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 0.5rem; /* เพิ่มระยะห่างระหว่างชื่อกับปุ่ม */
+    }
+    .card-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    /* =========================================== */
+
     .card-content div { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed #f3d6e0; }
     .card-content div:last-child { border-bottom: none; }
     .card-label { font-weight: 600; color: #b85d8c; }
     .card-value { text-align: right; }
-    .card-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
     .card-buttons button { padding: 0.8rem; font-size: 0.9rem; margin-top: 0; }
-    /* Summary for Mobile */
     .mobile-summary { display: none; margin-top: 2rem; padding: 1rem; background-color: #ffe5ec; border-radius: 15px; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; line-height: 1.8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
     @media (max-width: 768px) {
       .container { margin: 1rem auto; padding: 1rem; }
@@ -418,7 +437,7 @@
 
         const hasUnpaidInterest = (loan.unpaidInterestBalance || 0) > 0;
         const isOverdue = daysPassed > 30;
-        const isCloseToDue = daysPassed >= 25 && daysPassed <= 30; // ลูกหนี้ที่ใกล้ครบกำหนด (ภายใน 5 วัน)
+        const isCloseToDue = daysPassed >= 25 && daysPassed <= 30;
 
         let rowClass = '';
         let cardClass = '';
