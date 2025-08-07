@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* Original Theme: Pink and Purple */
     body { margin: 0; font-family: 'Prompt', sans-serif; background-image: url('https://i.postimg.cc/mr5PY1FR/IMG-2575.jpg'); background-size: cover; background-position: center; background-attachment: fixed; color: #4a4a4a; }
     .container { max-width: 950px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); animation: fadeIn 1s ease-in-out; }
     @keyframes fadeIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -36,6 +37,7 @@
     .val-gold { color: #d4af37; }
     .val-red { color: #dc3545; }
     .val-blue { color: #007bff; }
+    .val-green { color: #28a745; } /* New green color for interest paid */
     .btn-group { display: flex; justify-content: center; margin-top: 1rem; }
     .btn-group button { margin: 0 0.5rem; }
     td button { padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s; }
@@ -495,14 +497,14 @@
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
         `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
-        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-gold">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
+        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
       // Populate mobile summary
       mobileSummary.innerHTML =
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
         `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
-        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-gold">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
+        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
       if (chartData.length > 0) updateChart(chartData);
       else if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
