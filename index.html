@@ -45,6 +45,9 @@
     .btn-interest:hover { background-color: #ffcad4; transform: translateY(-2px); box-shadow: 0 6px #f5a5ae; }
     .btn-paid { background-color: #8ac98a; box-shadow: 0 4px #5e8f5e; cursor: not-allowed; }
     .btn-paid:hover { background-color: #8ac98a; transform: none; box-shadow: 0 4px #5e8f5e; }
+    /* New button style for partial interest payment */
+    .btn-partial-paid { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
+    .btn-partial-paid:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
     .btn-delete { background-color: #ff6384; box-shadow: 0 4px #c44c66; color: #fff; }
     .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px #ff6384; }
     .btn-history { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
@@ -407,9 +410,19 @@
             rowClass = 'row-soon-due';
             cardClass = 'card-soon-due';
         }
-        
-        const interestButtonText = accumulated <= 0 ? 'จ่ายแล้ว' : 'จ่ายดอก';
-        const interestButtonClass = accumulated <= 0 ? 'btn-paid' : 'btn-interest';
+
+        let interestButtonText;
+        let interestButtonClass;
+        if (hasUnpaidInterest) {
+          interestButtonText = 'จ่ายขาด'; // Updated text here
+          interestButtonClass = 'btn-partial-paid';
+        } else if (accumulated <= 0) {
+          interestButtonText = 'จ่ายแล้ว';
+          interestButtonClass = 'btn-paid';
+        } else {
+          interestButtonText = 'จ่ายดอก';
+          interestButtonClass = 'btn-interest';
+        }
 
         totalPrincipal += netPrincipal;
         totalAccumulated += accumulated;
@@ -435,7 +448,7 @@
             <td>${nextMonth.toLocaleString()}</td>
             <td>${formatDate(nextDueDate)}</td>
             <td><button onclick="showRepaymentPopup(${index})" class="btn-repay">คืนเงินต้น</button></td>
-            <td><button onclick="showInterestPopup(${index})" class="${interestButtonClass}">จ่ายดอก</button></td>
+            <td><button onclick="showInterestPopup(${index})" class="${interestButtonClass}">${interestButtonText}</button></td>
             <td><button onclick="showHistoryPopup(${index})" class="btn-history">ประวัติ</button></td>
             <td><button onclick="showDeletePopup(${index})" class="btn-delete">ลบ</button></td>
           </tr>`;
@@ -467,7 +480,7 @@
           </div>
           <div class="card-buttons">
             <button onclick="showRepaymentPopup(${index})" class="btn-repay">คืนเงินต้น</button>
-            <button onclick="showInterestPopup(${index})" class="${interestButtonClass}">จ่ายดอก</button>
+            <button onclick="showInterestPopup(${index})" class="${interestButtonClass}">${interestButtonText}</button>
             <button onclick="showHistoryPopup(${index})" class="btn-history">ประวัติ</button>
             <button onclick="showDeletePopup(${index})" class="btn-delete">ลบ</button>
           </div>
