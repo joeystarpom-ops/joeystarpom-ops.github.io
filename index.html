@@ -114,7 +114,7 @@
       <label>ชื่อ</label>
       <input type="text" id="name" required />
       <label>เงินต้น (บาท)</label>
-      <input type="number" id="principal" required />
+      <input type="text" id="principal" required class="formatted-input" />
       <label>ดอกเบี้ยต่อเดือน (%)</label>
       <input type="number" id="rate" step="0.01" required />
       <label>วันที่เริ่มยืม</label>
@@ -134,7 +134,7 @@
           <th>ดอกเบี้ย/เดือน</th>
           <th>วันที่เริ่ม</th>
           <th>วันที่ผ่านมา</th>
-          <th>ดอกเบี้ยสะสม</th>
+          <th>ดอกเบี้ยคงเหลือ</th>
           <th>ดอกเบี้ยเดือนหน้า</th>
           <th>ครบกำหนดถัดไป</th>
           <th>คืนเงินต้น</th>
@@ -241,7 +241,6 @@
   </div>
 
   <script>
-    // โค้ดถูกแก้ไขโดยลบข้อมูลตัวอย่างออกแล้ว
     let loans = JSON.parse(localStorage.getItem('loans') || '[]');
 
     let currentLoanIndex = -1;
@@ -258,29 +257,31 @@
     function getTotalPaid(loan) {
       return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
     }
-    
-    // ฟังก์ชันสำหรับคำนวณดอกเบี้ยสะสม
-    function getAccumulatedInterest(loan) {
-      const now = new Date();
+
+    // *** ฟังก์ชันใหม่สำหรับคำนวณดอกเบี้ยคงเหลือ (ตามคำขอ) ***
+    function getRemainingInterest(loan) {
       const totalPaidPrincipal = getTotalPaid(loan);
       let netPrincipal = loan.principal - totalPaidPrincipal;
       if (netPrincipal < 0) netPrincipal = 0;
 
-      // คำนวณดอกเบี้ยจากวันที่เริ่มยืม
+      // คำนวณดอกเบี้ยรายเดือนทั้งหมดตั้งแต่เริ่ม
       const startDate = new Date(loan.startDate);
-      const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+      const now = new Date();
+      const monthsPassed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
       
-      const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
-      const totalInterest = parseFloat((interestPerDay * daysPassed).toFixed(2));
-      
+      const monthlyInterestAmount = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+      const totalMonthlyInterestDue = parseFloat((monthlyInterestAmount * monthsPassed).toFixed(2));
+
+      // รวมการจ่ายดอกเบี้ยทั้งหมด
       const totalInterestPaid = (loan.interestPayments || []).reduce((sum, p) => sum + parseFloat(p.amount), 0);
       
-      const accumulated = parseFloat((totalInterest - totalInterestPaid).toFixed(2));
-      
-      // ป้องกันดอกเบี้ยติดลบ
-      return Math.max(0, accumulated);
-    }
+      // ดอกเบี้ยคงเหลือ = ดอกเบี้ยรายเดือนทั้งหมด - ดอกเบี้ยที่จ่ายแล้วทั้งหมด
+      const remainingInterest = parseFloat((totalMonthlyInterestDue - totalInterestPaid).toFixed(2));
 
+      // ป้องกันดอกเบี้ยคงเหลือติดลบ
+      return Math.max(0, remainingInterest);
+    }
+    
     // ฟังก์ชันแสดง Pop-up สำหรับจ่ายดอกเบี้ย
     function showInterestPopup(index) {
         currentLoanIndex = index;
@@ -289,7 +290,7 @@
         let netPrincipal = loan.principal - totalPaidPrincipal;
         if (netPrincipal < 0) netPrincipal = 0;
 
-        // คำนวณดอกเบี้ยเต็มเดือนตามคำขอ
+        // คำนวณดอกเบี้ยเต็มเดือน
         const nextMonthInterest = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
         
         document.getElementById('interestMessage').textContent = 
@@ -308,14 +309,17 @@
         }
         
         const loan = loans[currentLoanIndex];
-        const currentAccumulated = getAccumulatedInterest(loan);
+        const totalPaidPrincipal = getTotalPaid(loan);
+        let netPrincipal = loan.principal - totalPaidPrincipal;
+        if (netPrincipal < 0) netPrincipal = 0;
+        
+        const monthlyInterestAmount = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+        const remainingInterest = getRemainingInterest(loan);
+        const totalInterestDue = remainingInterest + monthlyInterestAmount;
 
-        let paymentType;
-        if (paymentAmount >= currentAccumulated) {
+        let paymentType = 'partial';
+        if (paymentAmount >= totalInterestDue) {
             paymentType = 'full';
-        } else {
-            paymentType = 'partial';
-            alert(`ยอดเงินที่จ่ายน้อยกว่าดอกเบี้ยสะสม!`);
         }
 
         if (!loan.interestPayments) loan.interestPayments = [];
@@ -338,7 +342,7 @@
       
       const now = new Date();
       const chartData = [];
-      let totalPrincipal = 0, totalAccumulated = 0, totalNextMonth = 0;
+      let totalPrincipal = 0, totalRemainingInterest = 0, totalNextMonth = 0;
       let totalInterestPaidThisMonth = 0;
 
       loans.forEach((loan, index) => {
@@ -346,8 +350,9 @@
         let netPrincipal = loan.principal - totalPaid;
         if (netPrincipal < 0) netPrincipal = 0;
         
-        const accumulated = getAccumulatedInterest(loan);
-        const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+        const remainingInterest = getRemainingInterest(loan);
+        const monthlyInterest = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+        const nextMonthInterest = remainingInterest + monthlyInterest;
         
         let nextDueDate;
         // ใช้ dueDate ที่ผู้ใช้ระบุ ถ้ามี
@@ -366,25 +371,26 @@
         const daysUntilDue = Math.floor((nextDueDate - now) / (1000 * 60 * 60 * 24));
         const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
         
-        const hasUnpaidInterest = accumulated > 0;
+        const hasUnpaidInterest = remainingInterest > 0;
         
         const hasMadeFullPaymentThisMonth = (loan.interestPayments || []).some(p => {
             const paymentDate = new Date(p.date);
+            // Check if any payment was 'full' in the current month
             return p.type === 'full' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
         });
         
         // ตรวจสอบว่ามีการจ่ายดอกเบี้ยบางส่วนหรือไม่
-        const hasPartialInterestPaid = (loan.interestPayments || []).some(p => p.amount > 0) && accumulated > 0;
+        const hasPartialInterestPaid = (loan.interestPayments || []).some(p => p.amount > 0) && remainingInterest > 0;
 
         let isOverdue = false;
-        if (hasUnpaidInterest && daysUntilDue < -1) {
+        // Check if there is remaining interest and the due date has passed
+        if (hasUnpaidInterest && daysUntilDue < 0) {
             isOverdue = true;
         }
 
         let rowClass = '';
         let cardClass = '';
 
-        // แก้ไขการจัดลำดับเงื่อนไขให้ถูกต้องตามคำขอ
         if (isOverdue) {
             rowClass = 'row-overdue';
             cardClass = 'card-overdue';
@@ -399,18 +405,18 @@
         let interestButtonText;
         let interestButtonClass;
         // ตรวจสอบสถานะการจ่ายดอกเบี้ย
-        const totalInterestPaid = (loan.interestPayments || []).reduce((sum, p) => sum + p.amount, 0);
-        if (accumulated <= 0 && totalInterestPaid > 0) { // จ่ายครบแล้ว
+        if (remainingInterest <= 0 && (loan.interestPayments || []).length > 0) { // จ่ายครบแล้ว
             interestButtonText = 'จ่ายแล้ว';
             interestButtonClass = 'btn-paid';
         } else {
             interestButtonText = 'จ่ายดอก';
             interestButtonClass = 'btn-interest';
         }
-
+        
+        // Update totals
         totalPrincipal += netPrincipal;
-        totalAccumulated += accumulated;
-        totalNextMonth += nextMonth;
+        totalRemainingInterest += remainingInterest;
+        totalNextMonth += nextMonthInterest;
 
         // Calculate total interest paid for this month
         (loan.interestPayments || []).forEach(payment => {
@@ -428,8 +434,8 @@
             <td>${loan.rate}%</td>
             <td>${formatDate(loan.startDate)}</td>
             <td>${daysPassed} วัน</td>
-            <td class="val-red">${accumulated.toLocaleString()}</td>
-            <td>${nextMonth.toLocaleString()}</td>
+            <td class="val-red">${remainingInterest.toLocaleString()}</td>
+            <td>${nextMonthInterest.toLocaleString()}</td>
             <td><button onclick="showEditDueDatePopup(${index})" class="btn-edit">${formatDate(nextDueDate)}</button></td>
             <td><button onclick="showRepaymentPopup(${index})" class="btn-repay">คืนเงินต้น</button></td>
             <td><button onclick="showInterestPopup(${index})" class="${interestButtonClass}">${interestButtonText}</button></td>
@@ -450,12 +456,12 @@
               <span class="card-value">${netPrincipal.toLocaleString()} บาท</span>
             </div>
             <div>
-              <span class="card-label">ดอกเบี้ยสะสม:</span>
-              <span class="card-value val-red">${accumulated.toLocaleString()} บาท</span>
+              <span class="card-label">ดอกเบี้ยคงเหลือ:</span>
+              <span class="card-value val-red">${remainingInterest.toLocaleString()} บาท</span>
             </div>
             <div>
               <span class="card-label">ดอกเบี้ยเดือนหน้า:</span>
-              <span class="card-value">${nextMonth.toLocaleString()} บาท</span>
+              <span class="card-value">${nextMonthInterest.toLocaleString()} บาท</span>
             </div>
             <div>
               <span class="card-label">ครบกำหนด:</span>
@@ -477,14 +483,14 @@
       // Populate desktop summary footer
       document.getElementById('summaryFooter').innerHTML =
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
-        `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
+        `📈 ดอกเบี้ยคงเหลือ: <span class="val-red">${totalRemainingInterest.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
         `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
       // Populate mobile summary
       mobileSummary.innerHTML =
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
-        `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
+        `📈 ดอกเบี้ยคงเหลือ: <span class="val-red">${totalRemainingInterest.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
         `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
@@ -619,16 +625,6 @@
         
         // Update the amount
         loan[currentTransactionType][currentTransactionIndex].amount = newAmount;
-
-        // Check for interest payments, if the amount paid is greater than or equal to accumulated interest, change the type to 'full'
-        if (currentTransactionType === 'interestPayments') {
-            const accumulated = getAccumulatedInterest(loan);
-            if (newAmount >= accumulated) {
-                loan[currentTransactionType][currentTransactionIndex].type = 'full';
-            } else {
-                loan[currentTransactionType][currentTransactionIndex].type = 'partial';
-            }
-        }
         
         localStorage.setItem('loans', JSON.stringify(loans));
         hidePopup('editPaymentPopup');
@@ -668,7 +664,7 @@
     // ฟังก์ชันสำหรับดาวน์โหลดข้อมูลเป็นไฟล์ Excel
     function downloadExcel() {
       const wb = XLSX.utils.book_new();
-      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'กำหนดวันจ่ายดอก', 'วันที่ผ่านมา', 'ดอกเบี้ยสะสม', 'ดอกเบี้ยเดือนหน้า']];
+      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'กำหนดวันจ่ายดอก', 'วันที่ผ่านมา', 'ดอกเบี้ยคงเหลือ', 'ดอกเบี้ยเดือนหน้า']];
       const now = new Date();
       loans.forEach(loan => {
         const totalPaid = getTotalPaid(loan);
@@ -676,12 +672,13 @@
         
         const startDate = new Date(loan.startDate);
         const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-        const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
-        const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
-        const nextMonth = (netPrincipal * loan.rate / 100).toFixed(2);
+        const remainingInterest = getRemainingInterest(loan);
+        const monthlyInterest = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
+        const nextMonthInterest = remainingInterest + monthlyInterest;
+
         const dueDate = loan.dueDate ? formatDate(loan.dueDate) : 'คำนวณอัตโนมัติ';
         
-        wsData.push([loan.name, netPrincipal, loan.rate + '%', formatDate(loan.startDate), dueDate, `${daysPassed} วัน`, parseFloat(accumulated), parseFloat(nextMonth)]);
+        wsData.push([loan.name, netPrincipal, loan.rate + '%', formatDate(loan.startDate), dueDate, `${daysPassed} วัน`, parseFloat(remainingInterest), parseFloat(nextMonthInterest)]);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Loan Summary');
       XLSX.writeFile(wb, 'loan_summary.xlsx');
@@ -719,9 +716,11 @@
     // เมื่อฟอร์มถูก Submit
     document.getElementById('loanForm').addEventListener('submit', e => {
       e.preventDefault();
+      // ลบ comma ก่อนแปลงเป็นตัวเลข
+      const principalValue = document.getElementById('principal').value.replace(/,/g, '');
       loans.push({
         name: document.getElementById('name').value,
-        principal: parseFloat(document.getElementById('principal').value),
+        principal: parseFloat(principalValue),
         rate: parseFloat(document.getElementById('rate').value),
         startDate: document.getElementById('startDate').value,
         dueDate: document.getElementById('dueDate').value || null, // เก็บค่า dueDate
@@ -756,23 +755,35 @@
       }, 300);
     }
     
-    // ฟังก์ชันสำหรับจัดรูปแบบตัวเลขเมื่อพิมพ์
+    // ** ฟังก์ชันสำหรับจัดรูปแบบตัวเลขเมื่อพิมพ์ (ปรับปรุงใหม่) **
     function formatNumberInput(event) {
         const input = event.target;
         // ลบอักขระที่ไม่ใช่ตัวเลขและจุดออก
-        let value = input.value.replace(/[^0-9.]/g, '');
-        // ลบจุดทศนิยมที่เกินหนึ่งตำแหน่ง
+        let value = input.value.replace(/,/g, ''); // ลบ comma ก่อน
         const parts = value.split('.');
         if (parts.length > 2) {
             value = parts[0] + '.' + parts.slice(1).join('');
         }
         
-        // แปลงเป็นตัวเลขเพื่อจัดรูปแบบ
+        const hasDecimal = value.includes('.');
+        const lastCharIsDecimal = value.slice(-1) === '.';
+
         let number = parseFloat(value);
+
         if (!isNaN(number)) {
-            input.value = number.toLocaleString('en-US');
+            let formattedValue = number.toLocaleString('en-US');
+            // ถ้าค่าเดิมจบด้วยจุดทศนิยม ให้เพิ่มจุดทศนิยมกลับเข้าไป
+            if (lastCharIsDecimal && !hasDecimal) {
+                formattedValue += '.';
+            }
+            input.value = formattedValue;
         } else {
-            input.value = '';
+            // กรณีที่ไม่มีตัวเลขเลย หรือมีแต่จุดทศนิยม
+            if (value === '' || value === '.') {
+                input.value = value;
+            } else {
+                input.value = '';
+            }
         }
     }
 
