@@ -20,8 +20,8 @@
     label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
     input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 14px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; }
     input:focus { outline: none; box-shadow: 0 0 8px #ffaec8; background-color: #ffe5ec; }
-    button { margin-top: 1.5rem; background-color: #ffb3ab; border: none; padding: 0.8rem 1.8rem; border-radius: 20px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; margin-right: 0.5rem; box-shadow: 0 6px #f18d94; }
-    button:hover { transform: scale(1.05); background-color: #ffcad4; box-shadow: 0 6px #f5a5ae; }
+    button { margin-top: 1rem; background-color: #ffb3ab; border: none; padding: 0.6rem 1.2rem; border-radius: 14px; font-weight: bold; cursor: pointer; color: #fff; font-size: 0.95rem; margin-right: 0.3rem; box-shadow: 0 4px #f18d94; }
+    button:hover { transform: scale(1.05); background-color: #ffcad4; box-shadow: 0 4px #f5a5ae; }
     table { margin-top: 2rem; width: 100%; border-collapse: collapse; background-color: #fffafc; border-radius: 15px; overflow: hidden; }
     th, td { padding: 0.9rem; text-align: center; border-bottom: 1px solid #f3d6e0; font-size: 0.95rem; }
     th { background-color: #ffd4e3; color: #7c3a54; }
@@ -64,7 +64,7 @@
           <th>ดอกเบี้ยสะสม</th>
           <th>ดอกเบี้ยเดือนหน้า</th>
           <th>ครบกำหนดถัดไป</th>
-          <th>คืนเงินต้น / จ่ายดอก</th>
+          <th>การกระทำ</th>
           <th>ลบ</th>
         </tr>
       </thead>
@@ -77,8 +77,18 @@
     </table>
   </div>
 
+  <!-- Popup ตัวการ์ตูน -->
   <div class="popup" id="popup">
     <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGVzMHFqZmVtMW5wZDJ3bjh1cm8xZXhkeGk2c2lxM2Jtc3hxbmFyaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/oDatDPoi5nTy2Ypcrw/giphy.gif">
+  </div>
+
+  <!-- Popup ประวัติ -->
+  <div class="popup" id="historyPopup">
+    <div style="background:#fff;padding:2rem;border-radius:15px;max-width:500px;width:90%;overflow:auto;max-height:90vh">
+      <h2>📜 ประวัติการชำระเงิน</h2>
+      <div id="historyContent"></div>
+      <button onclick="document.getElementById('historyPopup').classList.remove('show')">ปิด</button>
+    </div>
   </div>
 
   <script>
@@ -89,47 +99,86 @@
       return d.toLocaleDateString('th-TH');
     }
 
-    function getTotalPaid(loan) {
-      return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
+    function getTotalPaid(loan, type = null) {
+      return (loan.repayments || [])
+        .filter(r => !type || r.type === type)
+        .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+    }
+
+    function addRepayment(index) {
+      const amount = prompt('กรุณากรอกจำนวนเงินต้นที่คืน (บาท):');
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        alert('กรุณากรอกจำนวนที่ถูกต้อง'); return;
+      }
+      if (!loans[index].repayments) loans[index].repayments = [];
+      loans[index].repayments.push({ type: 'principal', amount: parseFloat(amount), date: new Date().toISOString() });
+      localStorage.setItem('loans', JSON.stringify(loans));
+      calcSummary();
     }
 
     function markInterestPaid(index) {
+      const amount = prompt('กรุณากรอกจำนวนดอกเบี้ยที่จ่าย (บาท):');
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        alert('กรุณากรอกจำนวนที่ถูกต้อง'); return;
+      }
+      if (!loans[index].repayments) loans[index].repayments = [];
+      loans[index].repayments.push({ type: 'interest', amount: parseFloat(amount), date: new Date().toISOString() });
       loans[index].lastInterestPaid = new Date().toISOString();
       localStorage.setItem('loans', JSON.stringify(loans));
       calcSummary();
     }
 
+    function showHistory(index) {
+      const loan = loans[index];
+      const content = document.getElementById('historyContent');
+      if (!loan.repayments || loan.repayments.length === 0) {
+        content.innerHTML = '<p>ยังไม่มีประวัติการชำระเงิน</p>';
+      } else {
+        content.innerHTML = '<ul>' + loan.repayments.map(r =>
+          `<li>${r.type === 'interest' ? '💸 ดอกเบี้ย' : '💰 เงินต้น'}: ${r.amount.toLocaleString()} บาท — ${formatDate(r.date)}</li>`
+        ).join('') + '</ul>';
+      }
+      document.getElementById('historyPopup').classList.add('show');
+    }
+
+    function deleteLoan(index) {
+      if (confirm('คุณแน่ใจว่าต้องการลบลูกหนี้คนนี้?')) {
+        loans.splice(index, 1);
+        localStorage.setItem('loans', JSON.stringify(loans));
+        calcSummary();
+      }
+    }
+
     function calcSummary() {
       const tableBody = document.querySelector('#summaryTable tbody');
-      if (!tableBody) return;
       tableBody.innerHTML = '';
       const now = new Date();
       const chartData = [];
       let totalPrincipal = 0, totalAccumulated = 0, totalNextMonth = 0;
 
       loans.forEach((loan, index) => {
-        const totalPaid = getTotalPaid(loan);
-        let netPrincipal = loan.principal - totalPaid;
+        const principalPaid = getTotalPaid(loan, 'principal');
+        let netPrincipal = loan.principal - principalPaid;
         if (netPrincipal < 0) netPrincipal = 0;
 
-        let daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
-        if (daysPassed < 0) daysPassed = 0;
-
+        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
         const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
         const accumulated = parseFloat((interestPerDay * daysPassed).toFixed(2));
         const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
 
-        const loanStartDate = new Date(loan.startDate);
-        const monthsSinceStart = Math.floor((now.getFullYear() - loanStartDate.getFullYear()) * 12 + (now.getMonth() - loanStartDate.getMonth()));
-        const lastDue = new Date(loanStartDate);
-        lastDue.setMonth(loanStartDate.getMonth() + monthsSinceStart);
+        const interestPaid = getTotalPaid(loan, 'interest');
+        const unpaidInterest = Math.max(0, accumulated - interestPaid);
 
-        const paidInterest = loan.lastInterestPaid && !isNaN(Date.parse(loan.lastInterestPaid)) && new Date(loan.lastInterestPaid) >= lastDue;
-        const rowClass = netPrincipal > 0 && !paidInterest ? 'style="background-color:#ffcccc"' : '';
+        const loanStartDate = new Date(loan.startDate);
+        const monthsSinceStart = (now.getFullYear() - loanStartDate.getFullYear()) * 12 + (now.getMonth() - loanStartDate.getMonth());
+        const nextDue = new Date(loanStartDate);
+        nextDue.setMonth(loanStartDate.getMonth() + monthsSinceStart);
+
+        const rowClass = netPrincipal > 0 && unpaidInterest > 0 ? 'style=\"background-color:#ffcccc\"' : '';
 
         totalPrincipal += netPrincipal;
         totalAccumulated += accumulated;
-        totalNextMonth += nextMonth;
+        totalNextMonth += nextMonth + unpaidInterest;
 
         tableBody.innerHTML += `
           <tr ${rowClass}>
@@ -139,11 +188,12 @@
             <td>${formatDate(loan.startDate)}</td>
             <td>${daysPassed} วัน</td>
             <td>${accumulated.toLocaleString()}</td>
-            <td>${nextMonth.toLocaleString()}</td>
-            <td>${formatDate(lastDue)}</td>
+            <td>${(nextMonth + unpaidInterest).toLocaleString()}</td>
+            <td>${formatDate(nextDue)}</td>
             <td>
-              <button onclick="addRepayment(${index})">➕</button>
-              <button onclick="markInterestPaid(${index})">💸</button>
+              <button onclick="addRepayment(${index})">คืนเงินต้น</button><br>
+              <button onclick="markInterestPaid(${index})" style="background:${unpaidInterest <= 0 ? '#d3fcd3' : '#ffd4e3'}">${unpaidInterest <= 0 ? 'จ่ายแล้ว' : 'จ่ายดอก'}</button><br>
+              <button onclick="showHistory(${index})">📜 History</button>
             </td>
             <td><button onclick="deleteLoan(${index})">🗑️</button></td>
           </tr>`;
@@ -156,16 +206,11 @@
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span>`;
 
       if (chartData.length > 0) updateChart(chartData);
-      else if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
     }
 
     function updateChart(data) {
-      const canvas = document.getElementById('loanChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (window.loanChart && typeof window.loanChart.destroy === 'function') {
-        window.loanChart.destroy();
-      }
+      const ctx = document.getElementById('loanChart').getContext('2d');
+      if (window.loanChart) window.loanChart.destroy();
       const maxAmount = Math.max(...data.map(d => d.remaining));
       window.loanChart = new Chart(ctx, {
         type: 'bar',
@@ -187,32 +232,13 @@
       });
     }
 
-    function addRepayment(index) {
-      const amount = prompt('กรุณากรอกจำนวนเงินต้นที่คืน (บาท):');
-      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-        alert('กรุณากรอกจำนวนที่ถูกต้อง'); return;
-      }
-      if (!loans[index].repayments) loans[index].repayments = [];
-      loans[index].repayments.push({ amount: parseFloat(amount), date: new Date().toISOString() });
-      localStorage.setItem('loans', JSON.stringify(loans));
-      calcSummary();
-    }
-
-    function deleteLoan(index) {
-      if (confirm('คุณแน่ใจว่าต้องการลบลูกหนี้คนนี้?')) {
-        loans.splice(index, 1);
-        localStorage.setItem('loans', JSON.stringify(loans));
-        calcSummary();
-      }
-    }
-
     function downloadExcel() {
       const wb = XLSX.utils.book_new();
       const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'วันที่ผ่านมา', 'ดอกเบี้ยสะสม', 'ดอกเบี้ยเดือนหน้า', 'ครบกำหนดถัดไป']];
       const now = new Date();
       loans.forEach(loan => {
-        const totalPaid = getTotalPaid(loan);
-        const netPrincipal = loan.principal - totalPaid;
+        const principalPaid = getTotalPaid(loan, 'principal');
+        const netPrincipal = loan.principal - principalPaid;
         const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
         const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
         const accumulated = (interestPerDay * daysPassed).toFixed(2);
@@ -250,33 +276,4 @@
       reader.readAsText(file);
     }
 
-    document.getElementById('loanForm').addEventListener('submit', e => {
-      e.preventDefault();
-      loans.push({
-        name: document.getElementById('name').value,
-        principal: parseFloat(document.getElementById('principal').value),
-        rate: parseFloat(document.getElementById('rate').value),
-        startDate: document.getElementById('startDate').value,
-        repayments: []
-      });
-      localStorage.setItem('loans', JSON.stringify(loans));
-      e.target.reset();
-      calcSummary();
-      showPopup();
-    });
-
-    function showPopup() {
-      const popup = document.getElementById('popup');
-      if (!popup) return;
-      popup.style.display = 'flex';
-      requestAnimationFrame(() => popup.classList.add('show'));
-      setTimeout(() => {
-        popup.classList.remove('show');
-        setTimeout(() => popup.style.display = 'none', 300);
-      }, 2000);
-    }
-
-    calcSummary();
-  </script>
-</body>
-</html>
+    document.getElementById('loan
