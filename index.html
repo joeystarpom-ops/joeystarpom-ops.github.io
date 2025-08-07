@@ -3,321 +3,117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>บัญชีเงินกู้ โคตรน่ารัก</title>
-  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>บัญชีเงินกู้ ยู่ยี่</title>
+  <!-- เปลี่ยนฟอนต์จาก Prompt เป็น Mali -->
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Spectacularly Cute Pastel Theme */
-    :root {
-      --pink-primary: #ffb8c9;
-      --pink-secondary: #fce4ec;
-      --orange-primary: #ff8a65;
-      --orange-secondary: #ffccbc;
-      --yellow-light: #fff9c4;
-      --green-light: #a7ffeb;
-      --text-dark: #5d4037;
-      --text-brown: #8d6e63;
-      --bg-light: #fff8f5;
-    }
-    body { 
-        margin: 0; 
-        font-family: 'Mali', cursive; 
-        background-color: var(--pink-secondary);
-        color: var(--text-dark);
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        min-height: 100vh;
-        padding: 2rem 1rem;
-        background-image: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="45" fill="rgba(255,255,255,0.2)"/><circle cx="20" cy="80" r="10" fill="rgba(255,255,255,0.2)"/><circle cx="80" cy="20" r="15" fill="rgba(255,255,255,0.2)"/></svg>');
-        background-size: 50px;
-    }
-    .container { 
-        max-width: 950px; 
-        width: 100%;
-        margin: 0 auto; 
-        background: var(--bg-light); 
-        border-radius: 40px; 
-        padding: 3rem 2.5rem; 
-        box-shadow: 0 20px 50px rgba(255, 184, 201, 0.7), inset 0 0 15px rgba(255,255,255,0.8);
-        border: 4px solid var(--pink-primary);
-        animation: fadeIn 1s ease-in-out; 
-    }
-    @keyframes fadeIn { 0% { opacity: 0; transform: translateY(50px); } 100% { opacity: 1; transform: translateY(0); } }
-    h1 { 
-        text-align: center; 
-        color: var(--orange-primary);
-        font-size: 3rem; 
-        margin-bottom: 2rem; 
-        font-weight: 700;
-        text-shadow: 3px 3px var(--orange-secondary), 5px 5px var(--pink-primary);
-        transform: rotate(-3deg);
-        letter-spacing: 2px;
-    }
-    .chart-wrapper { 
-        width: 100%; 
-        height: 350px; 
-        background: var(--pink-secondary);
-        border-radius: 25px; 
-        padding: 1.5rem; 
-        box-sizing: border-box; 
-        box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.1);
-        margin-bottom: 2rem;
-    }
-    .anim-character { 
-        display: block; 
-        margin: 30px auto; 
-        width: 200px; 
-        border-radius: 50%;
-        box-shadow: 0 10px 20px rgba(255, 138, 101, 0.6);
-        animation: float 3s ease-in-out infinite; 
-    }
-    @keyframes float { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-15px) scale(1.05); } }
-    .popup { 
-        display: none; 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background: rgba(255, 184, 201, 0.7);
-        backdrop-filter: blur(8px);
-        justify-content: center; 
-        align-items: center; 
-        z-index: 99999; 
-        opacity: 0; 
-        transition: opacity 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); 
-    }
+    /* Original Theme: Pink and Purple */
+    body { margin: 0; font-family: 'Mali', cursive, sans-serif; background-image: url('https://i.postimg.cc/mr5PY1FR/IMG-2575.jpg'); background-size: cover; background-position: center; background-attachment: fixed; color: #4a4a4a; }
+    /* Adjusted container width for better centering and spacing on larger screens */
+    .container { max-width: 1200px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); animation: fadeIn 1s ease-in-out; }
+    @keyframes fadeIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
+    h1 { text-align: center; color: #ff7b9c; font-size: 2.2rem; margin-bottom: 1.5rem; }
+    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); box-sizing: border-box; }
+    .anim-character { display: block; margin: 20px auto; width: 180px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 99999; opacity: 0; transition: opacity 0.3s ease-in-out; }
     .popup.show { display: flex; opacity: 1; }
-    .popup-content { 
-        background: var(--bg-light); 
-        padding: 3rem; 
-        border-radius: 30px; 
-        text-align: center; 
-        box-shadow: 0 15px 40px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.8);
-        max-width: 500px; 
-        width: 90%; 
-        border: 3px solid var(--orange-secondary);
-        transform: scale(0.8);
-        transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    }
-    .popup.show .popup-content { transform: scale(1); }
-    .popup-content.small { 
-        max-width: 300px; 
-        padding: 2rem; 
-    }
-    .popup-content h3 { 
-        font-size: 2.2rem; 
-        margin-bottom: 1.5rem; 
-        color: var(--orange-primary); 
-        font-weight: 700;
-        text-shadow: 2px 2px var(--orange-secondary);
-        animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-    .popup-content ul { 
-        list-style-type: none; 
-        padding: 0; 
-        max-height: 300px; 
-        overflow-y: auto; 
-        text-align: left; 
-        background-color: var(--yellow-light); 
-        padding: 1.5rem; 
-        border-radius: 20px; 
-    }
-    .popup-content li { 
-        padding: 0.8rem; 
-        border-bottom: 2px dashed var(--orange-secondary);
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        font-size: 1.1rem;
-    }
+    .popup-content { background: #fff; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2); max-width: 500px; width: 90%; }
+    .popup-content.small { max-width: 350px; padding: 1.5rem; background: transparent; box-shadow: none; }
+    .popup-content h3 { font-size: 1.5rem; margin-bottom: 1rem; color: #ff7b9c; }
+    .popup-content ul { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; text-align: left; background-color: #fffafc; padding: 1rem; border-radius: 10px; }
+    .popup-content li { padding: 0.5rem; border-bottom: 1px solid #f3d6e0; display: flex; justify-content: space-between; align-items: center; }
     .popup-content li:last-child { border-bottom: none; }
-    .popup-content li span.date { color: var(--text-brown); font-size: 0.9rem; }
-    label { 
-        display: block; 
-        margin-top: 1.5rem; 
-        font-weight: 600; 
-        color: var(--text-brown);
-        font-size: 1.2rem;
-    }
-    input { 
-        width: 100%; 
-        padding: 1rem; 
-        border: 3px solid var(--pink-primary);
-        border-radius: 20px; 
-        margin-top: 0.8rem; 
-        font-size: 1.1rem; 
-        background-color: #fffaf0;
-        color: var(--text-dark);
-        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    }
-    input:focus { 
-        outline: none; 
-        box-shadow: 0 0 0 5px var(--orange-secondary);
-        border-color: var(--orange-primary);
-    }
-    button { 
-        margin-top: 1.8rem; 
-        background: linear-gradient(135deg, var(--orange-primary), var(--pink-primary));
-        border: none; 
-        padding: 1rem 2.5rem; 
-        border-radius: 40px; 
-        font-weight: bold; 
-        cursor: pointer; 
-        color: #fff; 
-        font-size: 1.2rem; 
-        margin-right: 0.8rem; 
-        box-shadow: 0 8px 25px rgba(255, 138, 101, 0.6);
-        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-    }
-    button:hover { 
-        transform: translateY(-5px) scale(1.05); 
-        box-shadow: 0 15px 30px rgba(255, 138, 101, 0.8); 
-    }
-    .btn-group { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 1.5rem; }
-    .btn-group button { margin: 0.5rem; }
-    .btn-upload { background: linear-gradient(135deg, #a7ffeb, #64ffda); box-shadow: 0 8px 25px rgba(100, 255, 218, 0.6); }
-    .btn-upload:hover { box-shadow: 0 15px 30px rgba(100, 255, 218, 0.8); }
-    table { 
-        margin-top: 2.5rem; 
-        width: 100%; 
-        border-collapse: separate; 
-        border-spacing: 0 10px;
-        background-color: transparent; 
-    }
-    th, td { 
-        padding: 1.5rem 1rem; 
-        text-align: center; 
-        font-size: 1.1rem; 
-        color: var(--text-dark);
-        background-color: var(--bg-light);
-        border-radius: 20px;
-        border: 2px solid var(--pink-secondary);
-    }
-    th { 
-        background: var(--pink-primary);
-        color: #fff; 
-        font-weight: 700;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        border-radius: 20px;
-        position: sticky; top: 0; z-index: 10;
-    }
-    td:first-child, th:first-child { border-top-left-radius: 20px; border-bottom-left-radius: 20px; }
-    td:last-child, th:last-child { border-top-right-radius: 20px; border-bottom-right-radius: 20px; }
-    tfoot td { 
-        background-color: var(--pink-secondary);
-        font-weight: 600; 
-        font-size: 1.2rem; 
-        color: var(--text-dark); 
-        text-align: left; 
-        padding: 2rem; 
-        line-height: 2; 
-        border-radius: 30px;
-        box-shadow: 0 5px 20px rgba(255, 184, 201, 0.5);
-    }
-    .val-pink { color: #e91e63; font-weight: 700; }
-    .val-red { color: #f44336; font-weight: 700; }
-    .val-blue { color: #2196f3; font-weight: 700; }
-    .val-green { color: #4caf50; font-weight: 700; }
-    td button { 
-        padding: 0.9rem 1.8rem; 
-        border-radius: 30px; 
-        font-size: 1rem; 
-        font-weight: 600;
-        transition: transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55), box-shadow 0.2s; 
-    }
-    .btn-repay { background: linear-gradient(135deg, var(--green-light), #64ffda); box-shadow: 0 4px #42c9b4; color: var(--text-dark); text-shadow: none;}
-    .btn-repay:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px #42c9b4; }
-    .btn-interest { background: linear-gradient(135deg, var(--orange-secondary), var(--orange-primary)); box-shadow: 0 4-4px #ff7043; color: #fff; }
-    .btn-interest:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px #ff7043; }
-    .btn-paid { background: #e0e0e0; box-shadow: 0 4px #9e9e9e; cursor: not-allowed; color: #78909c; }
-    .btn-paid:hover { transform: none; box-shadow: 0 4px #9e9e9e; }
-    .btn-partial-paid { background: linear-gradient(135deg, #ffc107, #ff9800); box-shadow: 0 4px #ffb300; color: #fff; }
-    .btn-partial-paid:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px #ffb300; }
-    .btn-delete { background: linear-gradient(135deg, #ef5350, #d32f2f); box-shadow: 0 4px #c62828; color: #fff; }
-    .btn-delete:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px #c62828; }
-    .btn-history { background: linear-gradient(135deg, #81c784, #4caf50); box-shadow: 0 4px #388e3c; color: #fff; }
-    .btn-history:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px #388e3c; }
-    .row-overdue { background-color: #ffcdd2; }
-    .row-partial-paid { background-color: #ffe0b2; }
-    .row-soon-due { background-color: #fffde7; }
+    .popup-content li span.date { color: #888; font-size: 0.9rem; }
+    label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
+    input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 14px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; }
+    input:focus { outline: none; box-shadow: 0 0 8px #ffaec8; background-color: #ffe5ec; }
+    button { margin-top: 1.5rem; background-color: #ffb3ab; border: none; padding: 0.8rem 1.8rem; border-radius: 20px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; margin-right: 0.5rem; box-shadow: 0 6px #f18d94; }
+    button:hover { transform: scale(1.05); background-color: #ffcad4; box-shadow: 0 6px #f5a5ae; }
+    table { margin-top: 2rem; width: 100%; border-collapse: collapse; background-color: #fffafc; border-radius: 15px; overflow: hidden; }
+    /* Increased padding and added text alignment for better readability */
+    th, td { padding: 1.2rem 0.8rem; text-align: center; border-bottom: 1px solid #f3d6e0; font-size: 0.95rem; }
+    th { background-color: #ffd4e3; color: #7c3a54; }
+    tfoot td { background-color: #ffe5ec; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; padding: 1rem; line-height: 1.8; }
+    .val-gold { color: #d4af37; }
+    .val-red { color: #dc3545; }
+    .val-blue { color: #007bff; }
+    .val-green { color: #28a745; } /* New green color for interest paid */
+    .btn-group { display: flex; justify-content: center; margin-top: 1rem; }
+    .btn-group button { margin: 0 0.5rem; }
+    td button { padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s; }
+    .btn-repay { background-color: #92dff3; box-shadow: 0 4px #6ac1db; color: #fff; }
+    .btn-repay:hover { background-color: #b3e7f5; transform: translateY(-2px); box-shadow: 0 6px #8dd0e9; }
+    .btn-interest { background-color: #ffb3ab; box-shadow: 0 4px #f18d94; color: #fff; }
+    .btn-interest:hover { background-color: #ffcad4; transform: translateY(-2px); box-shadow: 0 6px #f5a5ae; }
+    .btn-paid { background-color: #8ac98a; box-shadow: 0 4px #5e8f5e; cursor: not-allowed; }
+    .btn-paid:hover { background-color: #8ac98a; transform: none; box-shadow: 0 4px #5e8f5e; }
+    /* New button style for partial interest payment */
+    .btn-partial-paid { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
+    .btn-partial-paid:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
+    .btn-delete { background-color: #ff6384; box-shadow: 0 4px #c44c66; color: #fff; }
+    .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px #ff6384; }
+    .btn-history { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
+    .btn-history:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
+    /* Updated colors for better visibility */
+    .row-overdue { background-color: #ffdddd; }
+    .row-partial-paid { background-color: #e0d0f0; }
+    /* New class for loans close to the due date */
+    .row-soon-due { background-color: #FFCC99; }
     
     /* Mobile-specific styles */
-    .mobile-cards { display: none; margin-top: 2rem; flex-direction: column; gap: 2rem; }
-    .loan-card { 
-        background-color: var(--bg-light); 
-        padding: 2rem; 
-        border-radius: 25px; 
-        box-shadow: 0 10px 30px rgba(255, 184, 201, 0.7);
-        border-left: 8px solid var(--pink-primary);
-        animation: slideIn 0.5s ease-out; 
-    }
-    .card-overdue { border-left: 8px solid #f44336; }
-    .card-partial-paid { border-left: 8px solid #ff9800; }
-    .card-soon-due { border-left: 8px solid #ffc107; }
-    @keyframes slideIn { 0% { transform: translateX(-20px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
-    .card-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1.5rem; }
-    .card-header .name { font-size: 1.8rem; font-weight: 700; color: #e91e63; text-shadow: 1px 1px var(--pink-primary); }
-    .card-content div { display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 2px dashed var(--pink-secondary); }
+    .mobile-cards { display: none; margin-top: 2rem; flex-direction: column; gap: 1.5rem; }
+    .loan-card { background-color: #fffafc; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); animation: slideIn 0.5s ease-out; }
+    .card-overdue { background-color: #ffdddd; }
+    .card-partial-paid { background-color: #e0d0f0; }
+    .card-soon-due { background-color: #FFCC99; }
+    @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    .card-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1rem; }
+    .card-header .name { font-size: 1.3rem; font-weight: bold; color: #7c3a54; }
+    .card-content div { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed #f3d6e0; }
     .card-content div:last-child { border-bottom: none; }
-    .card-label { font-weight: 600; color: var(--text-brown); font-size: 1.1rem; }
-    .card-value { text-align: right; font-weight: 600; font-size: 1.1rem; }
-    .card-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; margin-top: 2rem; }
-    .card-buttons button { padding: 1rem; font-size: 1rem; margin-top: 0; }
-    .mobile-summary { 
-        display: none; 
-        margin-top: 2rem; 
-        padding: 2rem; 
-        background-color: var(--yellow-light); 
-        border-radius: 25px; 
-        font-weight: 600; 
-        font-size: 1.2rem; 
-        color: var(--text-dark); 
-        text-align: left; 
-        line-height: 2; 
-        box-shadow: 0 10px 30px rgba(255, 184, 201, 0.5);
-    }
+    .card-label { font-weight: 600; color: #b85d8c; }
+    .card-value { text-align: right; }
+    .card-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
+    .card-buttons button { padding: 0.8rem; font-size: 0.9rem; margin-top: 0; }
+    /* Summary for Mobile */
+    .mobile-summary { display: none; margin-top: 2rem; padding: 1rem; background-color: #ffe5ec; border-radius: 15px; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; line-height: 1.8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
     @media (max-width: 768px) {
-      .container { padding: 1rem; }
-      h1 { font-size: 2.5rem; margin-bottom: 1.5rem; }
+      .container { margin: 1rem auto; padding: 1rem; }
+      h1 { font-size: 1.8rem; margin-bottom: 1rem; }
       .chart-wrapper { height: 250px; }
       table { display: none; }
       tfoot { display: none; }
       .mobile-cards { display: flex; }
       .mobile-summary { display: block; }
-      form label, form input, form button { font-size: 1rem; }
-      form button { padding: 0.8rem 1.8rem; }
+      form label, form input, form button { font-size: 0.9rem; }
+      form button { padding: 0.7rem 1.5rem; }
       .btn-group { flex-wrap: wrap; gap: 0.5rem; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>💖 บัญชีเงินกู้ นู๋ตุ่น ✨</h1>
+    <h1>🧸 บัญชีเงินกู้ ยู่ยี่ 💗</h1>
     <div class="chart-wrapper">
       <canvas id="loanChart"></canvas>
     </div>
     <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" class="anim-character" />
 
     <form id="loanForm">
-      <label>ชื่อ ✏️</label>
+      <label>ชื่อ</label>
       <input type="text" id="name" required />
-      <label>เงินต้น (บาท) 💰</label>
+      <label>เงินต้น (บาท)</label>
       <input type="number" id="principal" required />
-      <label>ดอกเบี้ยต่อเดือน (%) 📈</label>
+      <label>ดอกเบี้ยต่อเดือน (%)</label>
       <input type="number" id="rate" step="0.01" required />
-      <label>วันที่เริ่มยืม 🗓️</label>
+      <label>วันที่เริ่มยืม</label>
       <input type="date" id="startDate" required />
-      <div class="btn-group">
-        <button type="submit">➕ เพิ่มลูกหนี้</button>
-        <button type="button" onclick="downloadExcel()">📥 ดาวน์โหลด Excel</button>
-        <input type="file" id="uploadFile" accept=".json" onchange="uploadData(event)" style="display:none;" />
-        <button type="button" class="btn-upload" onclick="document.getElementById('uploadFile').click()">📤 อัปโหลดข้อมูล</button>
-      </div>
+      <button type="submit">➕ เพิ่มลูกหนี้</button>
+      <button type="button" onclick="downloadExcel()">📥 ดาวน์โหลด Excel</button>
+      <input type="file" id="uploadFile" accept=".json" onchange="uploadData(event)" style="display:inline-block;margin-top:1rem" />
     </form>
 
     <table id="summaryTable">
@@ -355,12 +151,12 @@
   <!-- Popup สำหรับเพิ่มการคืนเงิน -->
   <div class="popup" id="repaymentPopup">
     <div class="popup-content">
-      <h3>คืนเงินต้น 💸</h3>
-      <p id="repaymentMessage"></p>
-      <input type="number" id="repaymentAmount" placeholder="กรอกจำนวนเงิน (บาท)" />
+      <h3 class="text-xl font-bold mb-4 text-pink-600">คืนเงินต้น</h3>
+      <p id="repaymentMessage" class="mb-4 text-gray-600"></p>
+      <input type="number" id="repaymentAmount" placeholder="กรอกจำนวนเงิน (บาท)" class="mb-4" />
       <div class="btn-group">
         <button onclick="submitRepayment()">ยืนยัน</button>
-        <button onclick="hidePopup('repaymentPopup')" style="background: #e2e8f0; color: var(--text-dark); text-shadow: none;">ยกเลิก</button>
+        <button onclick="hidePopup('repaymentPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -368,12 +164,12 @@
   <!-- Popup สำหรับจ่ายดอกเบี้ย -->
   <div class="popup" id="interestPopup">
     <div class="popup-content">
-      <h3>จ่ายดอกเบี้ย 💰</h3>
-      <p id="interestMessage"></p>
-      <input type="number" id="interestAmount" placeholder="กรอกจำนวนเงินที่จ่าย (บาท)" />
+      <h3 class="text-xl font-bold mb-4 text-pink-600">จ่ายดอกเบี้ย</h3>
+      <p id="interestMessage" class="mb-4 text-gray-600"></p>
+      <input type="number" id="interestAmount" placeholder="กรอกจำนวนเงินที่จ่าย (บาท)" class="mb-4" />
       <div class="btn-group">
         <button onclick="submitInterestPayment()">ยืนยัน</button>
-        <button onclick="hidePopup('interestPopup')" style="background: #e2e8f0; color: var(--text-dark); text-shadow: none;">ยกเลิก</button>
+        <button onclick="hidePopup('interestPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -381,11 +177,11 @@
   <!-- Popup สำหรับยืนยันการลบ -->
   <div class="popup" id="deletePopup">
     <div class="popup-content">
-      <h3>ยืนยันการลบ 🚨</h3>
-      <p id="deleteMessage"></p>
+      <h3 class="text-xl font-bold mb-4 text-red-600">ยืนยันการลบ</h3>
+      <p id="deleteMessage" class="mb-4 text-gray-600"></p>
       <div class="btn-group">
-        <button onclick="confirmDelete()" style="background: linear-gradient(135deg, #ef5350, #d32f2f); color: white;">ยืนยัน</button>
-        <button onclick="hidePopup('deletePopup')" style="background: #e2e8f0; color: var(--text-dark); text-shadow: none;">ยกเลิก</button>
+        <button onclick="confirmDelete()" class="bg-red-500 shadow-md hover:bg-red-600 hover:shadow-lg">ยืนยัน</button>
+        <button onclick="hidePopup('deletePopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
       </div>
     </div>
   </div>
@@ -393,48 +189,119 @@
   <!-- Popup สำหรับแสดงประวัติ -->
   <div class="popup" id="historyPopup">
     <div class="popup-content">
-      <h3>ประวัติการทำรายการ 📜</h3>
+      <h3 class="text-xl font-bold mb-4">ประวัติการทำรายการ</h3>
       <ul id="historyList"></ul>
       <div class="btn-group">
         <button onclick="hidePopup('historyPopup')">ปิด</button>
       </div>
     </div>
   </div>
-  
+
   <!-- Popup สำหรับแจ้งเตือนการเพิ่มลูกหนี้สำเร็จ (Transparent) -->
   <div class="popup" id="successPopup">
     <div class="popup-content small">
-        <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" alt="Success GIF" style="width: 100px; height: auto; border-radius: 50%; box-shadow: 0 5px 15px rgba(255, 138, 101, 0.5);">
+      <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExczdzZWNzbDV1a3E0ZDNpbzRxNW93Y256Z2V6NjRxZjJ3MmppMjF6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DZQTp76MfXhRGOBWok/giphy.gif" alt="Success GIF" style="width: 60%; height: auto;">
     </div>
   </div>
-  
+
   <script>
+    // ข้อมูลตัวอย่างลูกหนี้ใหม่ ที่แบ่งตามสถานะการชำระ
     let loans = JSON.parse(localStorage.getItem('loans') || '[]');
     if (loans.length === 0) {
       loans = [
-        { name: "ปลาวาฬ", principal: 20000, rate: 2.0, startDate: "2025-08-01", repayments: [], interestPayments: [], unpaidInterestBalance: 0 },
-        { name: "พิงกี้", principal: 30000, rate: 1.8, startDate: "2025-07-28", repayments: [], interestPayments: [], unpaidInterestBalance: 0 },
-        { name: "เก่งกล้า", principal: 40000, rate: 1.5, startDate: "2025-07-20", repayments: [], interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 600, type: 'full' }], unpaidInterestBalance: 0 },
-        { name: "ภูผา", principal: 10000, rate: 2.5, startDate: "2025-07-10", repayments: [], interestPayments: [{ date: "2025-07-10T10:00:00Z", amount: 250, type: 'full' }], unpaidInterestBalance: 0 },
-        { name: "น้ำหวาน", principal: 18000, rate: 2.0, startDate: "2025-07-15", repayments: [], interestPayments: [{ date: "2025-07-15T10:00:00Z", amount: 360, type: 'full' }], unpaidInterestBalance: 0 },
-        { name: "มะลิ", principal: 25000, rate: 3.0, startDate: "2025-06-01", repayments: [], interestPayments: [], unpaidInterestBalance: 0 },
-        { name: "เมฆา", principal: 12000, rate: 2.2, startDate: "2025-05-15", repayments: [], interestPayments: [], unpaidInterestBalance: 0 },
-        { name: "สายฟ้า", principal: 8000, rate: 4.0, startDate: "2025-06-25", repayments: [], interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 200, type: 'partial' }], unpaidInterestBalance: 90 }
+        // === กลุ่มที่ 1: ยังไม่ถึงกำหนดชำระ (แถบสีขาวปกติ) ===
+        {
+          name: "ปลาวาฬ",
+          principal: 20000,
+          rate: 2.0,
+          startDate: "2025-08-01", // ยังไม่ใกล้ถึงกำหนด
+          repayments: [],
+          interestPayments: [],
+          unpaidInterestBalance: 0
+        },
+        {
+          name: "พิงกี้",
+          principal: 30000,
+          rate: 1.8,
+          startDate: "2025-07-28", // ยังไม่ใกล้ถึงกำหนด
+          repayments: [],
+          interestPayments: [],
+          unpaidInterestBalance: 0
+        },
+        {
+          name: "เก่งกล้า",
+          principal: 40000,
+          rate: 1.5,
+          startDate: "2025-07-20",
+          repayments: [],
+          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 600, type: 'full' }],
+          unpaidInterestBalance: 0
+        },
+        // === กลุ่มที่ 2: ใกล้ถึงกำหนดชำระ (แถบสีเหลืองอ่อน) ===
+        {
+          name: "ภูผา",
+          principal: 10000,
+          rate: 2.5,
+          startDate: "2025-07-10",
+          repayments: [],
+          interestPayments: [{ date: "2025-07-10T10:00:00Z", amount: 250, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 28 วันที่แล้ว
+          unpaidInterestBalance: 0
+        },
+        {
+          name: "น้ำหวาน",
+          principal: 18000,
+          rate: 2.0,
+          startDate: "2025-07-15",
+          repayments: [],
+          interestPayments: [{ date: "2025-07-15T10:00:00Z", amount: 360, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 23 วันที่แล้ว
+          unpaidInterestBalance: 0
+        },
+        // === กลุ่มที่ 3: เลยกำหนดชำระ (แถบสีชมพูอ่อน) ===
+        {
+          name: "มะลิ",
+          principal: 25000,
+          rate: 3.0,
+          startDate: "2025-06-01", // เลยกำหนดมานานแล้ว ไม่เคยจ่ายดอกเบี้ยเลย
+          repayments: [],
+          interestPayments: [],
+          unpaidInterestBalance: 0
+        },
+        {
+          name: "เมฆา",
+          principal: 12000,
+          rate: 2.2,
+          startDate: "2025-05-15", // เลยกำหนดมานานแล้ว ไม่เคยจ่ายดอกเบี้ยเลย
+          repayments: [],
+          interestPayments: [],
+          unpaidInterestBalance: 0
+        },
+        {
+          name: "สายฟ้า",
+          principal: 8000,
+          rate: 4.0,
+          startDate: "2025-06-25",
+          repayments: [],
+          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 200, type: 'partial' }], // เคยจ่ายดอกเบี้ยแค่บางส่วนเมื่อ 20 ก.ค.
+          unpaidInterestBalance: 90
+        }
       ];
     }
-    
-    let currentLoanIndex = -1;
-    let accumulatedInterestForPopup = 0;
 
+    let currentLoanIndex = -1;
+    let accumulatedInterestForPopup = 0; // Global variable to store accumulated interest for the popup
+
+    // ฟังก์ชันช่วยแสดงผลวันที่ให้อยู่ในรูปแบบที่อ่านง่าย
     function formatDate(dateStr) {
       const d = new Date(dateStr);
       return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
+    // คำนวณเงินที่จ่ายไปแล้วทั้งหมดของลูกหนี้แต่ละคน
     function getTotalPaid(loan) {
       return (loan.repayments || []).reduce((sum, r) => sum + parseFloat(r.amount), 0);
     }
     
+    // ฟังก์ชันสำหรับคำนวณดอกเบี้ยสะสม
     function getAccumulatedInterest(loan) {
       const now = new Date();
       const totalPaidPrincipal = getTotalPaid(loan);
@@ -455,6 +322,7 @@
       return accumulated;
     }
     
+    // ฟังก์ชันแสดง Pop-up สำหรับจ่ายดอกเบี้ย (แก้ไขแล้ว)
     function showInterestPopup(index) {
         currentLoanIndex = index;
         const loan = loans[index];
@@ -467,6 +335,7 @@
         showPopup('interestPopup');
     }
 
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการจ่ายดอกเบี้ย (แก้ไขแล้ว)
     function submitInterestPayment() {
         const paymentAmount = parseFloat(document.getElementById('interestAmount').value);
         if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -475,7 +344,7 @@
         }
         
         const loan = loans[currentLoanIndex];
-        const accumulated = getAccumulatedInterest(loan);
+        const accumulated = getAccumulatedInterest(loan); // Re-calculate to be sure
 
         const paymentType = paymentAmount >= accumulated ? 'full' : 'partial';
 
@@ -486,6 +355,7 @@
             loan.unpaidInterestBalance = 0;
         } else {
             loan.unpaidInterestBalance = parseFloat((accumulated - paymentAmount).toFixed(2));
+             // แจ้งเตือนเมื่อมีการจ่ายไม่ครบ
             alert(`ยอดเงินที่จ่ายน้อยกว่าดอกเบี้ยสะสม! ยอดค้างชำระ ${loan.unpaidInterestBalance.toLocaleString()} บาท จะถูกทบไปในเดือนถัดไป`);
         }
 
@@ -494,6 +364,7 @@
         calcSummary();
     }
 
+    // ฟังก์ชันหลักสำหรับคำนวณและแสดงข้อมูลสรุป
     function calcSummary() {
       const tableBody = document.querySelector('#summaryTable tbody');
       const mobileCardsContainer = document.getElementById('mobileCards');
@@ -506,7 +377,7 @@
       const now = new Date();
       const chartData = [];
       let totalPrincipal = 0, totalAccumulated = 0, totalNextMonth = 0;
-      let totalInterestPaidThisMonth = 0;
+      let totalInterestPaidThisMonth = 0; // New variable to track interest paid this month
 
       loans.forEach((loan, index) => {
         const totalPaid = getTotalPaid(loan);
@@ -532,7 +403,7 @@
 
         const hasUnpaidInterest = (loan.unpaidInterestBalance || 0) > 0;
         const isOverdue = daysPassed > 30;
-        const isCloseToDue = daysUntilDue <= 5;
+        const isCloseToDue = daysUntilDue <= 5; // ลูกหนี้ที่ใกล้ครบกำหนด (ภายใน 5 วัน)
 
         let rowClass = '';
         let cardClass = '';
@@ -548,7 +419,7 @@
         let interestButtonText;
         let interestButtonClass;
         if (hasUnpaidInterest) {
-          interestButtonText = 'จ่ายขาด';
+          interestButtonText = 'จ่ายขาด'; // Updated text here
           interestButtonClass = 'btn-partial-paid';
         } else if (accumulated <= 0) {
           interestButtonText = 'จ่ายแล้ว';
@@ -562,6 +433,7 @@
         totalAccumulated += accumulated;
         totalNextMonth += nextMonth;
 
+        // Calculate total interest paid for this month
         loan.interestPayments.forEach(payment => {
           const paymentDate = new Date(payment.date);
           if (paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear()) {
@@ -569,10 +441,11 @@
           }
         });
 
+        // Populate the summary table (for desktop)
         tableBody.innerHTML += `
           <tr class="${rowClass}">
             <td>${loan.name}</td>
-            <td class="val-pink">${netPrincipal.toLocaleString()}</td>
+            <td>${netPrincipal.toLocaleString()}</td>
             <td>${loan.rate}%</td>
             <td>${formatDate(loan.startDate)}</td>
             <td>${daysPassed} วัน</td>
@@ -585,6 +458,7 @@
             <td><button onclick="showDeletePopup(${index})" class="btn-delete">ลบ</button></td>
           </tr>`;
 
+        // Create a card for mobile view
         const card = document.createElement('div');
         card.className = `loan-card ${cardClass}`;
         card.innerHTML = `
@@ -594,7 +468,7 @@
           <div class="card-content">
             <div>
               <span class="card-label">เงินต้นคงเหลือ:</span>
-              <span class="card-value val-pink">${netPrincipal.toLocaleString()} บาท</span>
+              <span class="card-value">${netPrincipal.toLocaleString()} บาท</span>
             </div>
             <div>
               <span class="card-label">ดอกเบี้ยสะสม:</span>
@@ -602,7 +476,7 @@
             </div>
             <div>
               <span class="card-label">ดอกเบี้ยเดือนหน้า:</span>
-              <span class="card-value val-blue">${nextMonth.toLocaleString()} บาท</span>
+              <span class="card-value">${nextMonth.toLocaleString()} บาท</span>
             </div>
             <div>
               <span class="card-label">ครบกำหนดในอีก:</span>
@@ -621,14 +495,16 @@
         chartData.push({ name: loan.name, remaining: netPrincipal });
       });
 
+      // Populate desktop summary footer
       document.getElementById('summaryFooter').innerHTML =
-        `💰 เงินต้นคงเหลือรวม: <span class="val-pink">${totalPrincipal.toLocaleString()} บาท</span><br>` +
+        `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
         `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
         `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
+      // Populate mobile summary
       mobileSummary.innerHTML =
-        `💰 เงินต้นคงเหลือรวม: <span class="val-pink">${totalPrincipal.toLocaleString()} บาท</span><br>` +
+        `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
         `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
         `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
         `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-green">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
@@ -637,6 +513,7 @@
       else if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
     }
 
+    // อัปเดตกราฟแสดงข้อมูลเงินต้นคงเหลือ
     function updateChart(data) {
       const canvas = document.getElementById('loanChart');
       if (!canvas) return;
@@ -645,11 +522,6 @@
         window.loanChart.destroy();
       }
       const maxAmount = Math.max(...data.map(d => d.remaining));
-      
-      const rootStyle = getComputedStyle(document.documentElement);
-      const orangePrimary = rootStyle.getPropertyValue('--orange-primary').trim();
-      const textDark = rootStyle.getPropertyValue('--text-dark').trim();
-
       window.loanChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -657,68 +529,20 @@
           datasets: [{
             label: 'เงินต้นคงเหลือ (บาท)',
             data: data.map(l => l.remaining),
-            backgroundColor: data.map(l => `rgba(255, 138, 101, ${Math.max(0.4, l.remaining / maxAmount)})`), /* Pastel Orange */
-            borderColor: orangePrimary,
-            borderWidth: 1,
+            backgroundColor: data.map(l => `rgba(255, 105, 135, ${Math.max(0.3, l.remaining / maxAmount)})`),
             borderRadius: 10
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { 
-            legend: { 
-                display: false 
-            },
-            tooltip: {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                titleColor: textDark,
-                bodyColor: textDark,
-                borderColor: orangePrimary,
-                borderWidth: 1,
-                cornerRadius: 10,
-                callbacks: {
-                    label: function(context) {
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed.y !== null) {
-                            label += new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(context.parsed.y);
-                        }
-                        return label;
-                    }
-                }
-            }
-          },
-          scales: { 
-            y: { 
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(255, 138, 101, 0.1)'
-                },
-                ticks: {
-                    color: textDark,
-                    font: { family: 'Mali' },
-                    callback: function(value, index, ticks) {
-                        return new Intl.NumberFormat('th-TH').format(value) + ' บ.';
-                    }
-                }
-            },
-            x: {
-                grid: {
-                    color: 'rgba(255, 138, 101, 0.1)'
-                },
-                ticks: {
-                    color: textDark,
-                    font: { family: 'Mali' }
-                }
-            }
-          }
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true } }
         }
       });
     }
 
+    // แสดง Pop-up สำหรับเพิ่มการคืนเงิน
     function showRepaymentPopup(index) {
       currentLoanIndex = index;
       const loanName = loans[index].name;
@@ -726,6 +550,7 @@
       showPopup('repaymentPopup');
     }
 
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการคืนเงิน
     function submitRepayment() {
       const amount = document.getElementById('repaymentAmount').value;
       if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
@@ -739,6 +564,7 @@
       calcSummary();
     }
     
+    // แสดง Pop-up สำหรับยืนยันการลบ
     function showDeletePopup(index) {
       currentLoanIndex = index;
       const loanName = loans[index].name;
@@ -746,6 +572,7 @@
       showPopup('deletePopup');
     }
 
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการลบ
     function confirmDelete() {
       loans.splice(currentLoanIndex, 1);
       localStorage.setItem('loans', JSON.stringify(loans));
@@ -753,6 +580,7 @@
       calcSummary();
     }
 
+    // แสดง Pop-up สำหรับแสดงประวัติการทำรายการ
     function showHistoryPopup(index) {
       const loan = loans[index];
       const historyList = document.getElementById('historyList');
@@ -781,6 +609,7 @@
       showPopup('historyPopup');
     }
 
+    // ฟังก์ชันสำหรับดาวน์โหลดข้อมูลเป็นไฟล์ Excel
     function downloadExcel() {
       const wb = XLSX.utils.book_new();
       const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'วันที่ผ่านมา', 'ดอกเบี้ยสะสม', 'ดอกเบี้ยเดือนหน้า', 'ครบกำหนดถัดไป']];
@@ -809,6 +638,7 @@
       XLSX.writeFile(wb, 'loan_summary.xlsx');
     }
 
+    // ฟังก์ชันสำหรับอัปโหลดข้อมูลจากไฟล์ JSON
     function uploadData(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -836,6 +666,7 @@
       reader.readAsText(file);
     }
 
+    // เมื่อฟอร์มถูก Submit
     document.getElementById('loanForm').addEventListener('submit', e => {
       e.preventDefault();
       loans.push({
@@ -856,6 +687,7 @@
       }, 2000);
     });
 
+    // ฟังก์ชันสำหรับแสดง Pop-up
     function showPopup(id) {
       const popup = document.getElementById(id);
       if (!popup) return;
@@ -863,6 +695,7 @@
       requestAnimationFrame(() => popup.classList.add('show'));
     }
 
+    // ฟังก์ชันสำหรับซ่อน Pop-up
     function hidePopup(id) {
       const popup = document.getElementById(id);
       if (!popup) return;
@@ -870,9 +703,10 @@
       setTimeout(() => {
         popup.style.display = 'none';
         if (id === 'repaymentPopup') document.getElementById('repaymentAmount').value = '';
-      }, 400);
+      }, 300);
     }
 
+    // เริ่มต้นแสดงผลเมื่อหน้าเว็บโหลดเสร็จ
     calcSummary();
   </script>
 </body>
