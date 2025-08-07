@@ -211,6 +211,7 @@
 
   <script>
     // ข้อมูลตัวอย่างลูกหนี้ใหม่ ที่แบ่งตามสถานะการชำระ
+    // (ลองลบข้อมูลใน localStorage ทิ้งก่อนเพื่อทดสอบการเปลี่ยนแปลง)
     let loans = JSON.parse(localStorage.getItem('loans') || '[]');
     if (loans.length === 0) {
       loans = [
@@ -237,9 +238,9 @@
           name: "เก่งกล้า",
           principal: 40000,
           rate: 1.5,
-          startDate: "2025-07-20",
+          startDate: "2025-07-01",
           repayments: [],
-          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 600, type: 'full' }],
+          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 600, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 20 ก.ค.
           unpaidInterestBalance: 0
         },
         // === กลุ่มที่ 2: ใกล้ถึงกำหนดชำระ (แถบสีเหลืองอ่อน) ===
@@ -247,18 +248,18 @@
           name: "ภูผา",
           principal: 10000,
           rate: 2.5,
-          startDate: "2025-07-10",
+          startDate: "2025-07-05",
           repayments: [],
-          interestPayments: [{ date: "2025-07-10T10:00:00Z", amount: 250, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 28 วันที่แล้ว
+          interestPayments: [{ date: "2025-07-10T10:00:00Z", amount: 250, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 10 ก.ค.
           unpaidInterestBalance: 0
         },
         {
           name: "น้ำหวาน",
           principal: 18000,
           rate: 2.0,
-          startDate: "2025-07-15",
+          startDate: "2025-07-01",
           repayments: [],
-          interestPayments: [{ date: "2025-07-15T10:00:00Z", amount: 360, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 23 วันที่แล้ว
+          interestPayments: [{ date: "2025-07-15T10:00:00Z", amount: 360, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 15 ก.ค.
           unpaidInterestBalance: 0
         },
         // === กลุ่มที่ 3: เลยกำหนดชำระ (แถบสีชมพูอ่อน) ===
@@ -313,21 +314,34 @@
       let netPrincipal = loan.principal - totalPaidPrincipal;
       if (netPrincipal < 0) netPrincipal = 0;
       
-      const lastInterestPayment = loan.interestPayments.length > 0
-          ? loan.interestPayments[loan.interestPayments.length - 1]
+      // *** อัปเดตใหม่: คำนวณดอกเบี้ยโดยอิงจากวันที่เริ่มยืม (startDate) ***
+      const startDate = new Date(loan.startDate);
+      const startDay = startDate.getDate();
+      
+      let interestStartPeriod = new Date(now.getFullYear(), now.getMonth(), startDay);
+      if (now.getDate() < startDay) {
+        interestStartPeriod.setMonth(now.getMonth() - 1);
+      }
+      
+      const lastPaymentDate = loan.interestPayments.length > 0 
+          ? new Date(loan.interestPayments[loan.interestPayments.length - 1].date)
           : null;
       
-      const lastInterestPaidDate = lastInterestPayment
-          ? new Date(lastInterestPayment.date)
-          : new Date(loan.startDate);
-          
-      const daysPassed = Math.floor((now - lastInterestPaidDate) / (1000 * 60 * 60 * 24));
+      let baseDate = lastPaymentDate > interestStartPeriod ? lastPaymentDate : interestStartPeriod;
+      if (loan.interestPayments.length === 0) {
+        baseDate = startDate;
+      }
+      
+      const daysPassed = Math.floor((now - baseDate) / (1000 * 60 * 60 * 24));
+      
       const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
       const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
-      return accumulated;
+      
+      // ป้องกันดอกเบี้ยติดลบ
+      return Math.max(0, accumulated);
     }
     
-    // ฟังก์ชันแสดง Pop-up สำหรับจ่ายดอกเบี้ย (แก้ไขแล้ว)
+    // ฟังก์ชันแสดง Pop-up สำหรับจ่ายดอกเบี้ย
     function showInterestPopup(index) {
         currentLoanIndex = index;
         const loan = loans[index];
@@ -340,7 +354,7 @@
         showPopup('interestPopup');
     }
 
-    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการจ่ายดอกเบี้ย (แก้ไขแล้ว)
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการจ่ายดอกเบี้ย
     function submitInterestPayment() {
         const paymentAmount = parseFloat(document.getElementById('interestAmount').value);
         if (isNaN(paymentAmount) || paymentAmount <= 0) {
@@ -382,7 +396,7 @@
       const now = new Date();
       const chartData = [];
       let totalPrincipal = 0, totalAccumulated = 0, totalNextMonth = 0;
-      let totalInterestPaidThisMonth = 0; // New variable to track interest paid this month
+      let totalInterestPaidThisMonth = 0;
 
       loans.forEach((loan, index) => {
         const totalPaid = getTotalPaid(loan);
@@ -392,39 +406,40 @@
         const accumulated = getAccumulatedInterest(loan);
         const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
         
-        const lastInterestPayment = loan.interestPayments.length > 0
-            ? loan.interestPayments[loan.interestPayments.length - 1]
-            : null;
+        // *** อัปเดตใหม่: คำนวณวันครบกำหนดโดยอิงจากวันที่เริ่มยืม ***
+        const startDate = new Date(loan.startDate);
+        const startDay = startDate.getDate();
         
-        const lastInterestPaidDate = lastInterestPayment
-            ? new Date(lastInterestPayment.date)
-            : new Date(loan.startDate);
-            
-        const daysPassed = Math.floor((now - lastInterestPaidDate) / (1000 * 60 * 60 * 24));
-        const nextDueDate = new Date(lastInterestPaidDate);
-        nextDueDate.setMonth(lastInterestPaidDate.getMonth() + 1);
-
-        const daysUntilDue = 30 - (daysPassed % 30);
-
+        let nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
+        if (now.getDate() > startDay) {
+          nextDueDate.setMonth(now.getMonth() + 1);
+        }
+        
+        const daysUntilDue = Math.floor((nextDueDate - now) / (1000 * 60 * 60 * 24));
+        const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+        
         const hasUnpaidInterest = (loan.unpaidInterestBalance || 0) > 0;
-        const isOverdue = daysPassed > 30;
-        const isCloseToDue = daysUntilDue <= 5; // ลูกหนี้ที่ใกล้ครบกำหนด (ภายใน 5 วัน)
+        const isOverdue = daysUntilDue < 0; // วันครบกำหนดที่ผ่านมาแล้ว
+        const isCloseToDue = daysUntilDue >= 0 && daysUntilDue <= 5; // ใกล้ครบกำหนด (ภายใน 5 วัน)
 
         let rowClass = '';
         let cardClass = '';
 
-        if (isOverdue || hasUnpaidInterest) {
-            rowClass = hasUnpaidInterest ? 'row-partial-paid' : 'row-overdue';
-            cardClass = hasUnpaidInterest ? 'card-partial-paid' : 'card-overdue';
+        if (isOverdue) {
+            rowClass = 'row-overdue';
+            cardClass = 'card-overdue';
         } else if (isCloseToDue) {
             rowClass = 'row-soon-due';
             cardClass = 'card-soon-due';
+        } else if (hasUnpaidInterest) {
+            rowClass = 'row-partial-paid';
+            cardClass = 'card-partial-paid';
         }
 
         let interestButtonText;
         let interestButtonClass;
         if (hasUnpaidInterest) {
-          interestButtonText = 'จ่ายขาด'; // Updated text here
+          interestButtonText = 'จ่ายขาด';
           interestButtonClass = 'btn-partial-paid';
         } else if (accumulated <= 0) {
           interestButtonText = 'จ่ายแล้ว';
@@ -623,20 +638,18 @@
         const totalPaid = getTotalPaid(loan);
         const netPrincipal = loan.principal - totalPaid;
         
-        const lastInterestPayment = loan.interestPayments.length > 0
-            ? loan.interestPayments[loan.interestPayments.length - 1]
-            : null;
+        const startDate = new Date(loan.startDate);
+        const startDay = startDate.getDate();
+        let nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
+        if (now.getDate() > startDay) {
+          nextDueDate.setMonth(now.getMonth() + 1);
+        }
         
-        const lastInterestPaidDate = lastInterestPayment
-            ? new Date(lastInterestPayment.date)
-            : new Date(loan.startDate);
-            
-        const daysPassed = Math.floor((now - lastInterestPaidDate) / (1000 * 60 * 60 * 24));
+        const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
         const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
         const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
         const nextMonth = (netPrincipal * loan.rate / 100).toFixed(2);
-        const nextDueDate = new Date(lastInterestPaidDate);
-        nextDueDate.setMonth(lastInterestPaidDate.getMonth() + 1);
+        
         wsData.push([loan.name, netPrincipal, loan.rate + '%', formatDate(loan.startDate), `${daysPassed} วัน`, parseFloat(accumulated), parseFloat(nextMonth), formatDate(nextDueDate)]);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Loan Summary');
