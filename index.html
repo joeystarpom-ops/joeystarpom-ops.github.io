@@ -27,9 +27,10 @@
     .popup-content.small { max-width: 350px; padding: 1.5rem; background: transparent; box-shadow: none; }
     .popup-content h3 { font-size: 1.5rem; margin-bottom: 1rem; color: #ff7b9c; }
     .popup-content ul { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; text-align: left; background-color: #fffafc; padding: 1rem; border-radius: 20px; }
-    .popup-content li { padding: 0.5rem; border-bottom: 1px solid #f3d6e0; display: flex; justify-content: space-between; align-items: center; }
+    .popup-content li { padding: 0.5rem; border-bottom: 1px solid #f3d6e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .popup-content li:last-child { border-bottom: none; }
-    .popup-content li span.date { color: #888; font-size: 0.9rem; }
+    .popup-content li span.date { color: #888; font-size: 0.9rem; margin-left: auto; }
+    .popup-content li button { margin-left: 0.5rem; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; }
     label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
     input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 18px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; font-family: 'Mali', cursive, sans-serif; }
     input:focus { outline: none; box-shadow: 0 0 8px #ffaec8; background-color: #ffe5ec; }
@@ -62,17 +63,19 @@
     .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
     .btn-history { background-color: #c084fc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
     .btn-history:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn-edit { background-color: #a0aec0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-edit:hover { background-color: #cbd5e0; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
     /* Updated colors for better visibility */
-    .row-overdue { background-color: #ffdddd; }
-    .row-partial-paid { background-color: #e0d0f0; }
+    .row-overdue { background-color: #ffeded; } /* สีแดงพาสเทลสำหรับลูกหนี้ที่ค้างชำระ */
+    .row-partial-paid { background-color: #e0d0f0; } /* สีม่วงพาสเทลสำหรับลูกหนี้ที่จ่ายดอกเบี้ยบางส่วน */
     /* New class for loans close to the due date */
     .row-soon-due { background-color: #FFCC99; }
     
     /* Mobile-specific styles */
     .mobile-cards { display: none; margin-top: 2rem; flex-direction: column; gap: 1.5rem; }
     .loan-card { background-color: #fffafc; padding: 1.5rem; border-radius: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); animation: slideIn 0.5s ease-out; }
-    .card-overdue { background-color: #ffdddd; }
-    .card-partial-paid { background-color: #e0d0f0; }
+    .card-overdue { background-color: #feebeb; } /* สีแดงพาสเทลสำหรับลูกหนี้ที่ค้างชำระใน Mobile */
+    .card-partial-paid { background-color: #e0d0f0; } /* สีม่วงพาสเทลสำหรับลูกหนี้ที่จ่ายดอกเบี้ยบางส่วนใน Mobile */
     .card-soon-due { background-color: #FFCC99; }
     @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
     .card-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 1rem; }
@@ -201,6 +204,19 @@
       </div>
     </div>
   </div>
+  
+  <!-- Popup สำหรับแก้ไขประวัติการทำรายการ -->
+  <div class="popup" id="editPaymentPopup">
+      <div class="popup-content">
+          <h3 class="text-xl font-bold mb-4 text-pink-600">แก้ไขรายการ</h3>
+          <p id="editPaymentMessage" class="mb-4 text-gray-600"></p>
+          <input type="number" id="editPaymentAmount" placeholder="กรอกจำนวนเงินใหม่ (บาท)" class="mb-4" />
+          <div class="btn-group">
+              <button onclick="submitEditPayment()">บันทึก</button>
+              <button onclick="hidePopup('editPaymentPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
+          </div>
+      </div>
+  </div>
 
   <!-- Popup สำหรับแจ้งเตือนการเพิ่มลูกหนี้สำเร็จ (Transparent) -->
   <div class="popup" id="successPopup">
@@ -210,91 +226,12 @@
   </div>
 
   <script>
-    // ข้อมูลตัวอย่างลูกหนี้ใหม่ ที่แบ่งตามสถานะการชำระ
-    // (ลองลบข้อมูลใน localStorage ทิ้งก่อนเพื่อทดสอบการเปลี่ยนแปลง)
+    // โค้ดถูกแก้ไขโดยลบข้อมูลตัวอย่างออกแล้ว
     let loans = JSON.parse(localStorage.getItem('loans') || '[]');
-    if (loans.length === 0) {
-      loans = [
-        // === กลุ่มที่ 1: ยังไม่ถึงกำหนดชำระ (แถบสีขาวปกติ) ===
-        {
-          name: "ปลาวาฬ",
-          principal: 20000,
-          rate: 2.0,
-          startDate: "2025-08-01", // ยังไม่ใกล้ถึงกำหนด
-          repayments: [],
-          interestPayments: [],
-          unpaidInterestBalance: 0
-        },
-        {
-          name: "พิงกี้",
-          principal: 30000,
-          rate: 1.8,
-          startDate: "2025-07-28", // ยังไม่ใกล้ถึงกำหนด
-          repayments: [],
-          interestPayments: [],
-          unpaidInterestBalance: 0
-        },
-        {
-          name: "เก่งกล้า",
-          principal: 40000,
-          rate: 1.5,
-          startDate: "2025-07-01",
-          repayments: [],
-          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 600, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 20 ก.ค.
-          unpaidInterestBalance: 0
-        },
-        // === กลุ่มที่ 2: ใกล้ถึงกำหนดชำระ (แถบสีเหลืองอ่อน) ===
-        {
-          name: "ภูผา",
-          principal: 10000,
-          rate: 2.5,
-          startDate: "2025-07-05",
-          repayments: [],
-          interestPayments: [{ date: "2025-07-10T10:00:00Z", amount: 250, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 10 ก.ค.
-          unpaidInterestBalance: 0
-        },
-        {
-          name: "น้ำหวาน",
-          principal: 18000,
-          rate: 2.0,
-          startDate: "2025-07-01",
-          repayments: [],
-          interestPayments: [{ date: "2025-07-15T10:00:00Z", amount: 360, type: 'full' }], // จ่ายเต็มจำนวนเมื่อ 15 ก.ค.
-          unpaidInterestBalance: 0
-        },
-        // === กลุ่มที่ 3: เลยกำหนดชำระ (แถบสีชมพูอ่อน) ===
-        {
-          name: "มะลิ",
-          principal: 25000,
-          rate: 3.0,
-          startDate: "2025-06-01", // เลยกำหนดมานานแล้ว ไม่เคยจ่ายดอกเบี้ยเลย
-          repayments: [],
-          interestPayments: [],
-          unpaidInterestBalance: 0
-        },
-        {
-          name: "เมฆา",
-          principal: 12000,
-          rate: 2.2,
-          startDate: "2025-05-15", // เลยกำหนดมานานแล้ว ไม่เคยจ่ายดอกเบี้ยเลย
-          repayments: [],
-          interestPayments: [],
-          unpaidInterestBalance: 0
-        },
-        {
-          name: "สายฟ้า",
-          principal: 8000,
-          rate: 4.0,
-          startDate: "2025-06-25",
-          repayments: [],
-          interestPayments: [{ date: "2025-07-20T10:00:00Z", amount: 200, type: 'partial' }], // เคยจ่ายดอกเบี้ยแค่บางส่วนเมื่อ 20 ก.ค.
-          unpaidInterestBalance: 90
-        }
-      ];
-    }
 
     let currentLoanIndex = -1;
-    let accumulatedInterestForPopup = 0; // Global variable to store accumulated interest for the popup
+    let currentTransactionIndex = -1;
+    let currentTransactionType = '';
 
     // ฟังก์ชันช่วยแสดงผลวันที่ให้อยู่ในรูปแบบที่อ่านง่าย
     function formatDate(dateStr) {
@@ -313,44 +250,32 @@
       const totalPaidPrincipal = getTotalPaid(loan);
       let netPrincipal = loan.principal - totalPaidPrincipal;
       if (netPrincipal < 0) netPrincipal = 0;
-      
-      // *** อัปเดตใหม่: คำนวณดอกเบี้ยโดยอิงจากวันที่เริ่มยืม (startDate) ***
+
+      // คำนวณดอกเบี้ยจากวันที่เริ่มยืม
       const startDate = new Date(loan.startDate);
-      const startDay = startDate.getDate();
-      
-      let interestStartPeriod = new Date(now.getFullYear(), now.getMonth(), startDay);
-      if (now.getDate() < startDay) {
-        interestStartPeriod.setMonth(now.getMonth() - 1);
-      }
-      
-      const lastPaymentDate = loan.interestPayments.length > 0 
-          ? new Date(loan.interestPayments[loan.interestPayments.length - 1].date)
-          : null;
-      
-      let baseDate = lastPaymentDate > interestStartPeriod ? lastPaymentDate : interestStartPeriod;
-      if (loan.interestPayments.length === 0) {
-        baseDate = startDate;
-      }
-      
-      const daysPassed = Math.floor((now - baseDate) / (1000 * 60 * 60 * 24));
+      const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
       
       const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
-      const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
+      const totalInterest = parseFloat((interestPerDay * daysPassed).toFixed(2));
+      
+      const totalInterestPaid = (loan.interestPayments || []).reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      
+      const accumulated = parseFloat((totalInterest - totalInterestPaid).toFixed(2));
       
       // ป้องกันดอกเบี้ยติดลบ
       return Math.max(0, accumulated);
     }
-    
+
     // ฟังก์ชันแสดง Pop-up สำหรับจ่ายดอกเบี้ย
     function showInterestPopup(index) {
         currentLoanIndex = index;
         const loan = loans[index];
         
-        accumulatedInterestForPopup = getAccumulatedInterest(loan);
+        const accumulated = getAccumulatedInterest(loan);
         
         document.getElementById('interestMessage').textContent = 
-          `ดอกเบี้ยสะสมที่ต้องจ่ายสำหรับ ${loan.name} คือ ${accumulatedInterestForPopup.toLocaleString()} บาท`;
-        document.getElementById('interestAmount').value = accumulatedInterestForPopup;
+          `ดอกเบี้ยสะสมที่ต้องจ่ายสำหรับ ${loan.name} คือ ${accumulated.toLocaleString()} บาท`;
+        document.getElementById('interestAmount').value = accumulated;
         showPopup('interestPopup');
     }
 
@@ -363,20 +288,18 @@
         }
         
         const loan = loans[currentLoanIndex];
-        const accumulated = getAccumulatedInterest(loan); // Re-calculate to be sure
+        const currentAccumulated = getAccumulatedInterest(loan);
 
-        const paymentType = paymentAmount >= accumulated ? 'full' : 'partial';
+        let paymentType;
+        if (paymentAmount >= currentAccumulated) {
+            paymentType = 'full';
+        } else {
+            paymentType = 'partial';
+            alert(`ยอดเงินที่จ่ายน้อยกว่าดอกเบี้ยสะสม!`);
+        }
 
         if (!loan.interestPayments) loan.interestPayments = [];
         loan.interestPayments.push({ date: new Date().toISOString(), amount: paymentAmount, type: paymentType });
-        
-        if (paymentType === 'full') {
-            loan.unpaidInterestBalance = 0;
-        } else {
-            loan.unpaidInterestBalance = parseFloat((accumulated - paymentAmount).toFixed(2));
-             // แจ้งเตือนเมื่อมีการจ่ายไม่ครบ
-            alert(`ยอดเงินที่จ่ายน้อยกว่าดอกเบี้ยสะสม! ยอดค้างชำระ ${loan.unpaidInterestBalance.toLocaleString()} บาท จะถูกทบไปในเดือนถัดไป`);
-        }
 
         localStorage.setItem('loans', JSON.stringify(loans));
         hidePopup('interestPopup');
@@ -406,7 +329,6 @@
         const accumulated = getAccumulatedInterest(loan);
         const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
         
-        // *** อัปเดตใหม่: คำนวณวันครบกำหนดโดยอิงจากวันที่เริ่มยืม ***
         const startDate = new Date(loan.startDate);
         const startDay = startDate.getDate();
         
@@ -418,35 +340,41 @@
         const daysUntilDue = Math.floor((nextDueDate - now) / (1000 * 60 * 60 * 24));
         const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
         
-        const hasUnpaidInterest = (loan.unpaidInterestBalance || 0) > 0;
-        const isOverdue = daysUntilDue < 0; // วันครบกำหนดที่ผ่านมาแล้ว
-        const isCloseToDue = daysUntilDue >= 0 && daysUntilDue <= 5; // ใกล้ครบกำหนด (ภายใน 5 วัน)
+        const hasUnpaidInterest = accumulated > 0;
+        
+        const hasMadeFullPaymentThisMonth = loan.interestPayments.some(p => {
+            const paymentDate = new Date(p.date);
+            return p.type === 'full' && paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear();
+        });
+
+        let isOverdue = false;
+        if (hasUnpaidInterest && daysUntilDue < -1) {
+            isOverdue = true;
+        }
 
         let rowClass = '';
         let cardClass = '';
 
+        // แก้ไขการจัดลำดับเงื่อนไขให้ถูกต้อง
         if (isOverdue) {
             rowClass = 'row-overdue';
             cardClass = 'card-overdue';
-        } else if (isCloseToDue) {
+        } else if (daysUntilDue >= 0 && daysUntilDue <= 5 && !hasMadeFullPaymentThisMonth && hasUnpaidInterest) {
             rowClass = 'row-soon-due';
             cardClass = 'card-soon-due';
-        } else if (hasUnpaidInterest) {
+        } else if (accumulated > 0) {
             rowClass = 'row-partial-paid';
             cardClass = 'card-partial-paid';
         }
-
+        
         let interestButtonText;
         let interestButtonClass;
-        if (hasUnpaidInterest) {
-          interestButtonText = 'จ่ายขาด';
-          interestButtonClass = 'btn-partial-paid';
-        } else if (accumulated <= 0) {
-          interestButtonText = 'จ่ายแล้ว';
-          interestButtonClass = 'btn-paid';
+        if (accumulated <= 0) {
+            interestButtonText = 'จ่ายแล้ว';
+            interestButtonClass = 'btn-paid';
         } else {
-          interestButtonText = 'จ่ายดอก';
-          interestButtonClass = 'btn-interest';
+            interestButtonText = 'จ่ายดอก';
+            interestButtonClass = 'btn-interest';
         }
 
         totalPrincipal += netPrincipal;
@@ -606,28 +534,75 @@
       const historyList = document.getElementById('historyList');
       historyList.innerHTML = '';
       
-      const allTransactions = [
-        ...(loan.repayments || []).map(r => ({ type: 'คืนเงินต้น', amount: r.amount, date: new Date(r.date) })),
-        ...(loan.interestPayments || []).map(i => ({ type: 'จ่ายดอกเบี้ย', amount: i.amount, date: new Date(i.date), status: i.type })),
-      ];
+      const repaymentsWithIndex = (loan.repayments || []).map((r, i) => ({ ...r, type: 'คืนเงินต้น', originalIndex: i }));
+      const interestsWithIndex = (loan.interestPayments || []).map((i, idx) => ({ ...i, type: 'จ่ายดอกเบี้ย', originalIndex: idx }));
 
-      allTransactions.sort((a, b) => a.date - b.date);
+      const allTransactions = [...repaymentsWithIndex, ...interestsWithIndex];
+      allTransactions.sort((a, b) => new Date(a.date) - new Date(b.date));
 
       if (allTransactions.length === 0) {
         historyList.innerHTML = `<li>ไม่มีประวัติการทำรายการสำหรับ ${loan.name}</li>`;
       } else {
-        allTransactions.forEach(t => {
+        allTransactions.forEach((t, i) => {
           const statusText = t.status === 'partial' ? ' (บางส่วน)' : t.status === 'full' ? ' (ครบถ้วน)' : '';
           const li = document.createElement('li');
           li.innerHTML = `
             <span>${t.type}${statusText}: ${t.amount.toLocaleString()} บาท</span>
             <span class="date">${formatDate(t.date)}</span>
+            <button onclick="showEditPaymentPopup(${index}, '${t.type === 'คืนเงินต้น' ? 'repayments' : 'interestPayments'}', ${t.originalIndex})" class="btn-edit">แก้ไข</button>
           `;
           historyList.appendChild(li);
         });
       }
       showPopup('historyPopup');
     }
+
+    // ฟังก์ชันแสดง Pop-up สำหรับแก้ไขประวัติการทำรายการ
+    function showEditPaymentPopup(loanIndex, transactionType, transactionIndex) {
+        currentLoanIndex = loanIndex;
+        currentTransactionIndex = transactionIndex;
+        currentTransactionType = transactionType;
+
+        const loan = loans[loanIndex];
+        const transaction = loan[transactionType][transactionIndex];
+
+        document.getElementById('editPaymentMessage').textContent =
+            `แก้ไขจำนวนเงินสำหรับรายการ "${transactionType === 'repayments' ? 'คืนเงินต้น' : 'จ่ายดอกเบี้ย'}" (${formatDate(transaction.date)}):`;
+        document.getElementById('editPaymentAmount').value = transaction.amount;
+        
+        showPopup('editPaymentPopup');
+    }
+
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการแก้ไข
+    function submitEditPayment() {
+        const newAmount = parseFloat(document.getElementById('editPaymentAmount').value);
+
+        if (isNaN(newAmount) || newAmount <= 0) {
+            alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
+            return;
+        }
+
+        const loan = loans[currentLoanIndex];
+        
+        // Update the amount
+        loan[currentTransactionType][currentTransactionIndex].amount = newAmount;
+
+        // Check for interest payments, if the amount paid is greater than or equal to accumulated interest, change the type to 'full'
+        if (currentTransactionType === 'interestPayments') {
+            const accumulated = getAccumulatedInterest(loan);
+            if (newAmount >= accumulated) {
+                loan[currentTransactionType][currentTransactionIndex].type = 'full';
+            } else {
+                loan[currentTransactionType][currentTransactionIndex].type = 'partial';
+            }
+        }
+        
+        localStorage.setItem('loans', JSON.stringify(loans));
+        hidePopup('editPaymentPopup');
+        hidePopup('historyPopup'); // Close history popup as well, since its content is now outdated
+        calcSummary();
+    }
+
 
     // ฟังก์ชันสำหรับดาวน์โหลดข้อมูลเป็นไฟล์ Excel
     function downloadExcel() {
@@ -693,8 +668,7 @@
         rate: parseFloat(document.getElementById('rate').value),
         startDate: document.getElementById('startDate').value,
         repayments: [],
-        interestPayments: [],
-        unpaidInterestBalance: 0
+        interestPayments: []
       });
       localStorage.setItem('loans', JSON.stringify(loans));
       e.target.reset();
