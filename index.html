@@ -12,7 +12,9 @@
     .container { max-width: 950px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); animation: fadeIn 1s ease-in-out; }
     @keyframes fadeIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
     h1 { text-align: center; color: #ff7b9c; font-size: 2.2rem; margin-bottom: 1.5rem; }
-    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+    /* --- แก้ไขโค้ดส่วนนี้เพื่อให้กราฟอยู่ตรงกลางมากขึ้น --- */
+    .chart-wrapper { width: 100%; max-width: 800px; height: 300px; margin: 0 auto; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+    /* ---------------------------------------------------- */
     .anim-character { display: block; margin: 20px auto; width: 180px; animation: float 3s ease-in-out infinite; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 99999; opacity: 0; transition: opacity 0.3s ease-in-out; }
@@ -36,6 +38,7 @@
     .val-gold { color: #d4af37; }
     .val-green { color: #28a745; }
     .val-blue { color: #007bff; }
+    .val-red { color: #ff6384; }
     .btn-group { display: flex; justify-content: center; margin-top: 1rem; }
     .btn-group button { margin: 0 0.5rem; }
     td button { padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s; }
@@ -72,8 +75,6 @@
     .card-partial-paid { background-color: #e0d0f0; }
     .card-soon-due { background-color: #FFCC99; }
     @keyframes slideIn { 0% { transform: translateY(20px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-    
-    /* === โค้ดที่แก้ไขเพื่อจัดชื่อให้อยู่ตรงกลาง === */
     .card-header {
       display: flex;
       flex-direction: column;
@@ -84,10 +85,10 @@
       font-size: 1.3rem;
       font-weight: bold;
       color: #7c3a54;
-      white-space: nowrap; /* ป้องกันชื่อยาวๆ ตกบรรทัด */
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-bottom: 0.5rem; /* เพิ่มระยะห่างระหว่างชื่อกับปุ่ม */
+      margin-bottom: 0.5rem;
     }
     .card-buttons {
       display: flex;
@@ -95,8 +96,6 @@
       justify-content: center;
       gap: 0.5rem;
     }
-    /* =========================================== */
-
     .card-content div { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px dashed #f3d6e0; }
     .card-content div:last-child { border-bottom: none; }
     .card-label { font-weight: 600; color: #b85d8c; }
@@ -357,6 +356,7 @@
           
       const daysPassed = Math.floor((now - lastInterestPaidDate) / (1000 * 60 * 60 * 24));
       const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
+      // เพิ่มยอดดอกเบี้ยคงเหลือที่ยังไม่ได้จ่ายเข้ามาในการคำนวณด้วย
       const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
       return accumulated;
     }
@@ -393,6 +393,7 @@
         if (paymentType === 'full') {
             loan.unpaidInterestBalance = 0;
         } else {
+            // คำนวณยอดค้างจ่ายใหม่
             loan.unpaidInterestBalance = parseFloat((accumulated - paymentAmount).toFixed(2));
         }
 
@@ -481,10 +482,11 @@
           <div class="card-header">
             <span class="name">${loan.name}</span>
             <div class="card-buttons">
+              <!-- แก้ไขการจัดเรียงปุ่มตามคำขอ -->
               <button onclick="showRepaymentPopup(${index})" class="btn-repay">➕ คืนเงินต้น</button>
               <button onclick="showInterestPopup(${index})" class="${interestButtonClass}">${interestButtonText}</button>
-              <button onclick="showDeletePopup(${index})" class="btn-delete">🗑️</button>
               <button onclick="showHistoryPopup(${index})" class="btn-history">ประวัติ</button>
+              <button onclick="showDeletePopup(${index})" class="btn-delete">🗑️</button>
             </div>
           </div>
           <div class="card-content">
@@ -496,6 +498,12 @@
               <span class="card-label">ดอกเบี้ยสะสม:</span>
               <span class="card-value">${accumulated.toLocaleString()} บาท</span>
             </div>
+            ${hasUnpaidInterest ? `
+            <div>
+              <span class="card-label val-red">ดอกเบี้ยค้างจ่าย:</span>
+              <span class="card-value val-red">${loan.unpaidInterestBalance.toLocaleString()} บาท</span>
+            </div>
+            ` : ''}
             <div>
               <span class="card-label">ดอกเบี้ยเดือนหน้า:</span>
               <span class="card-value">${nextMonth.toLocaleString()} บาท</span>
