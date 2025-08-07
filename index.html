@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>บัญชีเงินกู้ ยู่ยี่</title>
-  <!-- เปลี่ยนฟอนต์จาก Prompt เป็น Mali -->
+  <!-- เปลี่ยนฟอนต์เป็น Mali ทั้งหมด -->
   <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,27 +12,32 @@
     /* Original Theme: Pink and Purple */
     body { margin: 0; font-family: 'Mali', cursive, sans-serif; background-image: url('https://i.postimg.cc/mr5PY1FR/IMG-2575.jpg'); background-size: cover; background-position: center; background-attachment: fixed; color: #4a4a4a; }
     /* Adjusted container width for better centering and spacing on larger screens */
-    .container { max-width: 1200px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); animation: fadeIn 1s ease-in-out; }
+    .container { max-width: 1200px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 30px; padding: 2rem; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); animation: fadeIn 1s ease-in-out; }
     @keyframes fadeIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
-    h1 { text-align: center; color: #ff7b9c; font-size: 2.2rem; margin-bottom: 1.5rem; }
-    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); box-sizing: border-box; }
+    /* ปรับเงาหัวข้อให้เหลือชั้นเดียวและนุ่มนวลขึ้น */
+    h1 { text-align: center; color: #ff7b9c; font-size: 2.2rem; margin-bottom: 1.5rem; text-shadow: 3px 3px 5px rgba(255, 123, 156, 0.5); }
+    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 25px; padding: 1rem; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); box-sizing: border-box; }
     .anim-character { display: block; margin: 20px auto; width: 180px; animation: float 3s ease-in-out infinite; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 99999; opacity: 0; transition: opacity 0.3s ease-in-out; }
     .popup.show { display: flex; opacity: 1; }
-    .popup-content { background: #fff; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2); max-width: 500px; width: 90%; }
+    /* เพิ่ม animation แบบเด้งๆ ให้กับ Pop-up และปรับให้โค้งมนขึ้น */
+    .popup-content { background: #fff; padding: 2rem; border-radius: 25px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.2); max-width: 500px; width: 90%; transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+    .popup.show .popup-content { transform: scale(1); }
     .popup-content.small { max-width: 350px; padding: 1.5rem; background: transparent; box-shadow: none; }
     .popup-content h3 { font-size: 1.5rem; margin-bottom: 1rem; color: #ff7b9c; }
-    .popup-content ul { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; text-align: left; background-color: #fffafc; padding: 1rem; border-radius: 10px; }
+    .popup-content ul { list-style-type: none; padding: 0; max-height: 300px; overflow-y: auto; text-align: left; background-color: #fffafc; padding: 1rem; border-radius: 20px; }
     .popup-content li { padding: 0.5rem; border-bottom: 1px solid #f3d6e0; display: flex; justify-content: space-between; align-items: center; }
     .popup-content li:last-child { border-bottom: none; }
     .popup-content li span.date { color: #888; font-size: 0.9rem; }
     label { display: block; margin-top: 1rem; font-weight: 600; color: #b85d8c; }
-    input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 14px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; }
+    input { width: 100%; padding: 0.6rem; border: 1px solid #fbcfd9; border-radius: 18px; margin-top: 0.3rem; font-size: 1rem; background-color: #fff0f6; font-family: 'Mali', cursive, sans-serif; }
     input:focus { outline: none; box-shadow: 0 0 8px #ffaec8; background-color: #ffe5ec; }
-    button { margin-top: 1.5rem; background-color: #ffb3ab; border: none; padding: 0.8rem 1.8rem; border-radius: 20px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; margin-right: 0.5rem; box-shadow: 0 6px #f18d94; }
-    button:hover { transform: scale(1.05); background-color: #ffcad4; box-shadow: 0 6px #f5a5ae; }
-    table { margin-top: 2rem; width: 100%; border-collapse: collapse; background-color: #fffafc; border-radius: 15px; overflow: hidden; }
+    /* เพิ่ม animation ให้ปุ่มทั้งหมดและปรับเงาให้นุ่มนวลขึ้น */
+    button { margin-top: 1.5rem; background-color: #ffb3ab; border: none; padding: 0.8rem 1.8rem; border-radius: 25px; font-weight: bold; cursor: pointer; color: #fff; font-size: 1rem; margin-right: 0.5rem; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.3s ease-in-out; font-family: 'Mali', cursive, sans-serif; }
+    button:hover { transform: translateY(-2px); background-color: #ffcad4; box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    button:active { transform: translateY(1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    table { margin-top: 2rem; width: 100%; border-collapse: collapse; background-color: #fffafc; border-radius: 20px; overflow: hidden; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
     /* Increased padding and added text alignment for better readability */
     th, td { padding: 1.2rem 0.8rem; text-align: center; border-bottom: 1px solid #f3d6e0; font-size: 0.95rem; }
     th { background-color: #ffd4e3; color: #7c3a54; }
@@ -43,20 +48,20 @@
     .val-green { color: #28a745; } /* New green color for interest paid */
     .btn-group { display: flex; justify-content: center; margin-top: 1rem; }
     .btn-group button { margin: 0 0.5rem; }
-    td button { padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s; }
-    .btn-repay { background-color: #92dff3; box-shadow: 0 4px #6ac1db; color: #fff; }
-    .btn-repay:hover { background-color: #b3e7f5; transform: translateY(-2px); box-shadow: 0 6px #8dd0e9; }
-    .btn-interest { background-color: #ffb3ab; box-shadow: 0 4px #f18d94; color: #fff; }
-    .btn-interest:hover { background-color: #ffcad4; transform: translateY(-2px); box-shadow: 0 6px #f5a5ae; }
-    .btn-paid { background-color: #8ac98a; box-shadow: 0 4px #5e8f5e; cursor: not-allowed; }
-    .btn-paid:hover { background-color: #8ac98a; transform: none; box-shadow: 0 4px #5e8f5e; }
+    td button { padding: 0.5rem 1rem; border-radius: 18px; font-size: 0.9rem; transition: background-color 0.2s, transform 0.2s; }
+    .btn-repay { background-color: #92dff3; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-repay:hover { background-color: #b3e7f5; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn-interest { background-color: #ffb3ab; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-interest:hover { background-color: #ffcad4; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn-paid { background-color: #8ac98a; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: not-allowed; }
+    .btn-paid:hover { background-color: #8ac98a; transform: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     /* New button style for partial interest payment */
-    .btn-partial-paid { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
-    .btn-partial-paid:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
-    .btn-delete { background-color: #ff6384; box-shadow: 0 4px #c44c66; color: #fff; }
-    .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px #ff6384; }
-    .btn-history { background-color: #c084fc; box-shadow: 0 4px #9333ea; color: #fff; }
-    .btn-history:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px #a855f7; }
+    .btn-partial-paid { background-color: #c084fc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-partial-paid:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn-delete { background-color: #ff6384; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-delete:hover { background-color: #ff91a9; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+    .btn-history { background-color: #c084fc; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: #fff; }
+    .btn-history:hover { background-color: #d8b4fe; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
     /* Updated colors for better visibility */
     .row-overdue { background-color: #ffdddd; }
     .row-partial-paid { background-color: #e0d0f0; }
@@ -65,7 +70,7 @@
     
     /* Mobile-specific styles */
     .mobile-cards { display: none; margin-top: 2rem; flex-direction: column; gap: 1.5rem; }
-    .loan-card { background-color: #fffafc; padding: 1.5rem; border-radius: 15px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); animation: slideIn 0.5s ease-out; }
+    .loan-card { background-color: #fffafc; padding: 1.5rem; border-radius: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); animation: slideIn 0.5s ease-out; }
     .card-overdue { background-color: #ffdddd; }
     .card-partial-paid { background-color: #e0d0f0; }
     .card-soon-due { background-color: #FFCC99; }
@@ -79,7 +84,7 @@
     .card-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; margin-top: 1rem; }
     .card-buttons button { padding: 0.8rem; font-size: 0.9rem; margin-top: 0; }
     /* Summary for Mobile */
-    .mobile-summary { display: none; margin-top: 2rem; padding: 1rem; background-color: #ffe5ec; border-radius: 15px; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; line-height: 1.8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+    .mobile-summary { display: none; margin-top: 2rem; padding: 1rem; background-color: #ffe5ec; border-radius: 20px; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; line-height: 1.8; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
     @media (max-width: 768px) {
       .container { margin: 1rem auto; padding: 1rem; }
       h1 { font-size: 1.8rem; margin-bottom: 1rem; }
