@@ -119,6 +119,8 @@
       <input type="number" id="rate" step="0.01" required />
       <label>วันที่เริ่มยืม</label>
       <input type="date" id="startDate" required />
+      <label>กำหนดวันจ่ายดอกเบี้ย (ไม่บังคับ)</label>
+      <input type="date" id="dueDate" />
       <button type="submit">➕ เพิ่มลูกหนี้</button>
       <button type="button" onclick="downloadExcel()">📥 ดาวน์โหลด Excel</button>
       <input type="file" id="uploadFile" accept=".json" onchange="uploadData(event)" style="display:inline-block;margin-top:1rem" />
@@ -214,6 +216,19 @@
           <div class="btn-group">
               <button onclick="submitEditPayment()">บันทึก</button>
               <button onclick="hidePopup('editPaymentPopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Popup สำหรับแก้ไขวันครบกำหนด -->
+  <div class="popup" id="editDueDatePopup">
+      <div class="popup-content">
+          <h3 class="text-xl font-bold mb-4 text-pink-600">แก้ไขวันครบกำหนด</h3>
+          <p id="editDueDateMessage" class="mb-4 text-gray-600"></p>
+          <input type="date" id="editDueDateInput" class="mb-4" />
+          <div class="btn-group">
+              <button onclick="submitEditDueDate()">บันทึก</button>
+              <button onclick="hidePopup('editDueDatePopup')" class="bg-gray-400 shadow-md hover:bg-gray-500 hover:shadow-lg">ยกเลิก</button>
           </div>
       </div>
   </div>
@@ -329,16 +344,22 @@
         const accumulated = getAccumulatedInterest(loan);
         const nextMonth = parseFloat((netPrincipal * loan.rate / 100).toFixed(2));
         
-        const startDate = new Date(loan.startDate);
-        const startDay = startDate.getDate();
-        
-        let nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
-        if (now.getDate() > startDay) {
-          nextDueDate.setMonth(now.getMonth() + 1);
+        let nextDueDate;
+        // ใช้ dueDate ที่ผู้ใช้ระบุ ถ้ามี
+        if (loan.dueDate) {
+          nextDueDate = new Date(loan.dueDate);
+        } else {
+          // ถ้าไม่มี ให้คำนวณจาก startDate
+          const startDate = new Date(loan.startDate);
+          const startDay = startDate.getDate();
+          nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
+          if (now.getDate() > startDay) {
+            nextDueDate.setMonth(now.getMonth() + 1);
+          }
         }
         
         const daysUntilDue = Math.floor((nextDueDate - now) / (1000 * 60 * 60 * 24));
-        const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+        const daysPassed = Math.floor((now - new Date(loan.startDate)) / (1000 * 60 * 60 * 24));
         
         const hasUnpaidInterest = accumulated > 0;
         
@@ -399,7 +420,7 @@
             <td>${daysPassed} วัน</td>
             <td class="val-red">${accumulated.toLocaleString()}</td>
             <td>${nextMonth.toLocaleString()}</td>
-            <td>${formatDate(nextDueDate)}</td>
+            <td><button onclick="showEditDueDatePopup(${index})" class="btn-edit">${formatDate(nextDueDate)}</button></td>
             <td><button onclick="showRepaymentPopup(${index})" class="btn-repay">คืนเงินต้น</button></td>
             <td><button onclick="showInterestPopup(${index})" class="${interestButtonClass}">${interestButtonText}</button></td>
             <td><button onclick="showHistoryPopup(${index})" class="btn-history">ประวัติ</button></td>
@@ -427,8 +448,8 @@
               <span class="card-value">${nextMonth.toLocaleString()} บาท</span>
             </div>
             <div>
-              <span class="card-label">ครบกำหนดในอีก:</span>
-              <span class="card-value">${daysUntilDue} วัน</span>
+              <span class="card-label">ครบกำหนด:</span>
+              <span class="card-value">${formatDate(nextDueDate)} (ในอีก ${daysUntilDue} วัน)</span>
             </div>
           </div>
           <div class="card-buttons">
@@ -602,30 +623,53 @@
         hidePopup('historyPopup'); // Close history popup as well, since its content is now outdated
         calcSummary();
     }
+    
+    // ฟังก์ชันสำหรับแสดง Pop-up เพื่อแก้ไขวันครบกำหนด
+    function showEditDueDatePopup(index) {
+        currentLoanIndex = index;
+        const loan = loans[index];
+        document.getElementById('editDueDateMessage').textContent = `แก้ไขวันครบกำหนดสำหรับ ${loan.name}:`;
+        document.getElementById('editDueDateInput').value = loan.dueDate || '';
+        showPopup('editDueDatePopup');
+    }
+
+    // ฟังก์ชันที่ทำงานเมื่อกดยืนยันการแก้ไขวันครบกำหนด
+    function submitEditDueDate() {
+        const newDueDate = document.getElementById('editDueDateInput').value;
+        const loan = loans[currentLoanIndex];
+
+        // ตรวจสอบความถูกต้องของวันที่
+        if (newDueDate && isNaN(Date.parse(newDueDate))) {
+            alert('กรุณาเลือกวันที่ที่ถูกต้อง');
+            return;
+        }
+
+        // อัปเดตข้อมูล
+        loan.dueDate = newDueDate || null;
+        
+        localStorage.setItem('loans', JSON.stringify(loans));
+        hidePopup('editDueDatePopup');
+        calcSummary();
+    }
 
 
     // ฟังก์ชันสำหรับดาวน์โหลดข้อมูลเป็นไฟล์ Excel
     function downloadExcel() {
       const wb = XLSX.utils.book_new();
-      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'วันที่ผ่านมา', 'ดอกเบี้ยสะสม', 'ดอกเบี้ยเดือนหน้า', 'ครบกำหนดถัดไป']];
+      const wsData = [['ชื่อ', 'เงินต้นคงเหลือ', 'ดอกเบี้ย/เดือน', 'วันที่เริ่ม', 'กำหนดวันจ่ายดอก', 'วันที่ผ่านมา', 'ดอกเบี้ยสะสม', 'ดอกเบี้ยเดือนหน้า']];
       const now = new Date();
       loans.forEach(loan => {
         const totalPaid = getTotalPaid(loan);
         const netPrincipal = loan.principal - totalPaid;
         
         const startDate = new Date(loan.startDate);
-        const startDay = startDate.getDate();
-        let nextDueDate = new Date(now.getFullYear(), now.getMonth(), startDay);
-        if (now.getDate() > startDay) {
-          nextDueDate.setMonth(now.getMonth() + 1);
-        }
-        
         const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
         const interestPerDay = (netPrincipal * loan.rate / 100) / 30;
         const accumulated = parseFloat(((interestPerDay * daysPassed) + (loan.unpaidInterestBalance || 0)).toFixed(2));
         const nextMonth = (netPrincipal * loan.rate / 100).toFixed(2);
+        const dueDate = loan.dueDate ? formatDate(loan.dueDate) : 'คำนวณอัตโนมัติ';
         
-        wsData.push([loan.name, netPrincipal, loan.rate + '%', formatDate(loan.startDate), `${daysPassed} วัน`, parseFloat(accumulated), parseFloat(nextMonth), formatDate(nextDueDate)]);
+        wsData.push([loan.name, netPrincipal, loan.rate + '%', formatDate(loan.startDate), dueDate, `${daysPassed} วัน`, parseFloat(accumulated), parseFloat(nextMonth)]);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Loan Summary');
       XLSX.writeFile(wb, 'loan_summary.xlsx');
@@ -645,6 +689,7 @@
             if (typeof item.principal !== 'number' || item.principal < 0) throw 'เงินต้นไม่ถูกต้อง';
             if (typeof item.rate !== 'number' || item.rate < 0) throw 'อัตราดอกเบี้ยไม่ถูกต้อง';
             if (typeof item.startDate !== 'string' || isNaN(Date.parse(item.startDate))) throw 'วันที่เริ่มไม่ถูกต้อง';
+            if (item.dueDate && (typeof item.dueDate !== 'string' || isNaN(Date.parse(item.dueDate)))) throw 'กำหนดวันจ่ายดอกไม่ถูกต้อง';
             if (!Array.isArray(item.repayments)) throw 'ประวัติการคืนเงินไม่ถูกต้อง';
             if (!Array.isArray(item.interestPayments)) throw 'ประวัติการจ่ายดอกเบี้ยไม่ถูกต้อง';
           });
@@ -667,6 +712,7 @@
         principal: parseFloat(document.getElementById('principal').value),
         rate: parseFloat(document.getElementById('rate').value),
         startDate: document.getElementById('startDate').value,
+        dueDate: document.getElementById('dueDate').value || null, // เก็บค่า dueDate
         repayments: [],
         interestPayments: []
       });
