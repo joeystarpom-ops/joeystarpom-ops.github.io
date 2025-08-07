@@ -12,7 +12,7 @@
     .container { max-width: 950px; margin: 3rem auto; background: rgba(255, 245, 248, 0.75); border-radius: 25px; padding: 2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); animation: fadeIn 1s ease-in-out; }
     @keyframes fadeIn { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
     h1 { text-align: center; color: #ff7b9c; font-size: 2.2rem; margin-bottom: 1.5rem; }
-    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+    .chart-wrapper { width: 100%; height: 300px; background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); box-sizing: border-box; }
     .anim-character { display: block; margin: 20px auto; width: 180px; animation: float 3s ease-in-out infinite; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 99999; opacity: 0; transition: opacity 0.3s ease-in-out; }
@@ -34,7 +34,7 @@
     th { background-color: #ffd4e3; color: #7c3a54; }
     tfoot td { background-color: #ffe5ec; font-weight: bold; font-size: 1.05rem; color: #7c3a54; text-align: left; padding: 1rem; line-height: 1.8; }
     .val-gold { color: #d4af37; }
-    .val-green { color: #28a745; }
+    .val-red { color: #dc3545; }
     .val-blue { color: #007bff; }
     .btn-group { display: flex; justify-content: center; margin-top: 1rem; }
     .btn-group button { margin: 0 0.5rem; }
@@ -369,6 +369,7 @@
       const now = new Date();
       const chartData = [];
       let totalPrincipal = 0, totalAccumulated = 0, totalNextMonth = 0;
+      let totalInterestPaidThisMonth = 0; // New variable to track interest paid this month
 
       loans.forEach((loan, index) => {
         const totalPaid = getTotalPaid(loan);
@@ -414,6 +415,14 @@
         totalAccumulated += accumulated;
         totalNextMonth += nextMonth;
 
+        // Calculate total interest paid for this month
+        loan.interestPayments.forEach(payment => {
+          const paymentDate = new Date(payment.date);
+          if (paymentDate.getMonth() === now.getMonth() && paymentDate.getFullYear() === now.getFullYear()) {
+            totalInterestPaidThisMonth += payment.amount;
+          }
+        });
+
         // Populate the summary table (for desktop)
         tableBody.innerHTML += `
           <tr class="${rowClass}">
@@ -422,7 +431,7 @@
             <td>${loan.rate}%</td>
             <td>${formatDate(loan.startDate)}</td>
             <td>${daysPassed} วัน</td>
-            <td>${accumulated.toLocaleString()}</td>
+            <td class="val-red">${accumulated.toLocaleString()}</td>
             <td>${nextMonth.toLocaleString()}</td>
             <td>${formatDate(nextDueDate)}</td>
             <td><button onclick="showRepaymentPopup(${index})" class="btn-repay">คืนเงินต้น</button></td>
@@ -445,7 +454,7 @@
             </div>
             <div>
               <span class="card-label">ดอกเบี้ยสะสม:</span>
-              <span class="card-value">${accumulated.toLocaleString()} บาท</span>
+              <span class="card-value val-red">${accumulated.toLocaleString()} บาท</span>
             </div>
             <div>
               <span class="card-label">ดอกเบี้ยเดือนหน้า:</span>
@@ -471,14 +480,16 @@
       // Populate desktop summary footer
       document.getElementById('summaryFooter').innerHTML =
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
-        `📈 ดอกเบี้ยสะสม: <span class="val-green">${totalAccumulated.toLocaleString()} บาท</span><br>` +
-        `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span>`;
+        `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
+        `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
+        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-gold">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
       // Populate mobile summary
       mobileSummary.innerHTML =
         `💰 เงินต้นคงเหลือรวม: <span class="val-gold">${totalPrincipal.toLocaleString()} บาท</span><br>` +
-        `📈 ดอกเบี้ยสะสม: <span class="val-green">${totalAccumulated.toLocaleString()} บาท</span><br>` +
-        `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span>`;
+        `📈 ดอกเบี้ยสะสม: <span class="val-red">${totalAccumulated.toLocaleString()} บาท</span><br>` +
+        `🔮 ดอกเบี้ยเดือนหน้า: <span class="val-blue">${totalNextMonth.toLocaleString()} บาท</span><br>` +
+        `💸 ดอกเบี้ยที่ได้รับแล้วในเดือนนี้: <span class="val-gold">${totalInterestPaidThisMonth.toLocaleString()} บาท</span>`;
 
       if (chartData.length > 0) updateChart(chartData);
       else if (window.loanChart && typeof window.loanChart.destroy === 'function') window.loanChart.destroy();
