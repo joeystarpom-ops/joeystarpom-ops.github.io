@@ -198,10 +198,10 @@
 
     function showHistory(index) {
       const loan = loans[index];
-      let html = `${loan.name} - ประวัติการชำระ:\\n`;
+      let html = `${loan.name} - ประวัติการชำระ:\n`;
       (loan.repayments || []).forEach(r => {
         const color = r.type === 'principal' ? '💵' : '💚';
-        html += `${color} ${formatDate(r.date)} - ${r.type === 'principal' ? 'คืนเงินต้น' : 'จ่ายดอก'}: ${r.amount}\\n`;
+        html += `${color} ${formatDate(r.date)} - ${r.type === 'principal' ? 'คืนเงินต้น' : 'จ่ายดอก'}: ${r.amount}\n`;
       });
       alert(html);
     }
@@ -259,7 +259,10 @@
       setTimeout(() => popup.classList.remove('show'), 2000);
     }
 
-    calcSummary();
+    // ✅ เรียก calcSummary หลัง DOM โหลดครบ
+    window.onload = () => {
+      calcSummary();
+    };
   </script>
 </body>
 </html>
